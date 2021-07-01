@@ -1,0 +1,77 @@
+{
+    "pages":[
+        {
+            "path": "/",
+            "title":"first contributions | feeds",
+            "components":[
+                {
+                    "name": "user-info"
+
+                }
+            ]
+        }
+    ],
+    "data_schema":{
+        "user":{
+            "name": "user",
+            "type": "object",
+            "properties":{
+                "id": "id",
+                "firstname": "string",
+                "lastname": "string",
+                "github_handle": "string",
+                "badges": {
+                    "type": "list",
+                    "schema": "badge"
+                }
+            }
+        },
+        "badge" : {
+            "name": "badge",
+            "type": "object",
+            "properties":{
+                "id": "id",
+                "display_name": "string",
+                "date_added" : "time"
+            }
+        },
+        "story": {
+            "name": "story",
+            "type": "object",
+            "properties": {
+                "id": "id",
+                "title": "string",
+                "content": "string",
+                "abstract": "string",
+                "claps": "int",
+                "is_clappend": "bool",
+                "comments": {
+                    "type": "list",
+                    "paginated": true,
+                    "schema": "comment",
+                    "joined_data": true
+                },
+                "created_by": {
+                    "type": "object",
+                    "schema": "user",
+                    "joined_data": true
+                }
+            }
+        },
+        "comment": {
+            "name": "comment",
+            "type": "object",
+            "properties": {
+                "id": "id",
+                "content": "string",
+                "abstract": "string",
+                "commented_by": {
+                    "type": "object",
+                    "schema": "user",
+                    "joined_data": true
+                }
+            }
+        }
+
+    }
+}
