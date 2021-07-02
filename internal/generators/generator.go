@@ -1,9 +1,9 @@
-package graphql
+package generators
 
 import (
 	"github.com/firstcontributions/matro/internal/generators/graphql/gocode"
 	"github.com/firstcontributions/matro/internal/generators/graphql/schema"
-	"github.com/firstcontributions/matro/internal/generators/graphql/types"
+	"github.com/firstcontributions/matro/internal/generators/types"
 	"github.com/firstcontributions/matro/internal/parser"
 )
 

@@ -6,7 +6,7 @@ import (
 	"go/format"
 	"text/template"
 
-	"github.com/firstcontributions/matro/internal/generators/graphql/types"
+	"github.com/firstcontributions/matro/internal/generators/types"
 	"github.com/firstcontributions/matro/internal/generators/utils"
 )
 
