@@ -6,16 +6,27 @@ import (
 	"go/format"
 	"text/template"
 
+	"github.com/firstcontributions/matro/internal/parser"
+
 	"github.com/firstcontributions/matro/internal/generators/types"
 	"github.com/firstcontributions/matro/internal/generators/utils"
 )
 
 type Generator struct {
 	*types.TypeDefs
+	Path string
+}
+
+func NewGenerator(path string, d *parser.Definition) *Generator {
+	td := types.NewTypeDefs(path, d)
+	return &Generator{
+		Path:     path,
+		TypeDefs: td,
+	}
 }
 
 func (g *Generator) Generate() error {
-	path := fmt.Sprintf("%s/intern/graphql/schema", g.Path)
+	path := fmt.Sprintf("%s/internal/graphql/schema", g.Path)
 	for _, t := range g.Types {
 		if err := g.generateCodeFromTemplate(typesTpl, t, path, t.Name+".go"); err != nil {
 			return err

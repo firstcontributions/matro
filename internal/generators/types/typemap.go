@@ -22,6 +22,15 @@ var goTypeMap = map[string]string{
 	parser.Bool:   "bool",
 }
 
+var grpcTypeMap = map[string]string{
+	parser.ID:     "string",
+	parser.String: "string",
+	parser.Time:   "google.protobuf.Timestamp",
+	parser.Int:    "int32",
+	parser.Float:  "float64",
+	parser.Bool:   "bool",
+}
+
 func getGraphQLType(t string) string {
 	if s, ok := graphQLSchemaTypeMap[t]; ok {
 		return s
@@ -30,6 +39,13 @@ func getGraphQLType(t string) string {
 }
 func getGoType(t string) string {
 	if s, ok := goTypeMap[t]; ok {
+		return s
+	}
+	return utils.ToTitleCase(t)
+}
+
+func getGRPCType(t string) string {
+	if s, ok := grpcTypeMap[t]; ok {
 		return s
 	}
 	return utils.ToTitleCase(t)

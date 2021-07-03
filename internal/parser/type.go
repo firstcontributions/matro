@@ -17,6 +17,34 @@ const (
 	List   = "list"
 )
 
+type Ops struct {
+	Create bool
+	Read   bool
+	Update bool
+	Delete bool
+}
+type Meta struct {
+	SearchFields []string `json:"search_fields"`
+	Filters      []string `json:"filters"`
+	GraphqlOps   *Ops     `json:"graphql_ops"`
+}
+
+func (m *Ops) UnmarshalJSON(data []byte) error {
+	for _, b := range data {
+		switch b {
+		case 'C':
+			m.Create = true
+		case 'R':
+			m.Read = true
+		case 'U':
+			m.Update = true
+		case 'D':
+			m.Delete = true
+		}
+	}
+	return nil
+}
+
 type Type struct {
 	Name       string           `json:"name"`
 	Type       string           `json:"type"`
@@ -24,6 +52,7 @@ type Type struct {
 	Schema     string           `json:"schema"`
 	JoinedData bool             `json:"joined_data"`
 	Properties map[string]*Type `json:"properties"`
+	Meta       Meta
 }
 
 func (t *Type) UnmarshalJSON(b []byte) error {
@@ -59,6 +88,7 @@ func (t *Type) UnmarshalJSON(b []byte) error {
 		Schema     string           `json:"schema"`
 		JoinedData bool             `json:"joined_data"`
 		Properties map[string]*Type `json:"properties"`
+		Meta       Meta             `json:"meta"`
 	}{}
 	if err := json.Unmarshal(b, &data); err != nil {
 		return err
@@ -69,6 +99,7 @@ func (t *Type) UnmarshalJSON(b []byte) error {
 	t.Schema = data.Schema
 	t.Properties = data.Properties
 	t.Name = data.Name
+	t.Meta = data.Meta
 	return nil
 }
 

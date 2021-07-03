@@ -9,10 +9,14 @@ import (
 )
 
 type CompositeType struct {
-	Name   string
-	Fields []*Field
-	IsNode bool
-	IsEdge bool
+	Name          string
+	Fields        map[string]*Field
+	ReferedFields []string
+	IsNode        bool
+	IsEdge        bool
+	Filters       []string
+	GraphqlOps    *parser.Ops
+	SearchFields  []string
 }
 type Field struct {
 	Name         string
@@ -95,18 +99,21 @@ func (f *Field) FortmattedType() string {
 	return t
 }
 func NewCompositeType(d *parser.Definition, typeDef *parser.Type) *CompositeType {
-	fields := []*Field{}
+	fields := map[string]*Field{}
 	isNode := false
 	for field, def := range typeDef.Properties {
 		if field == "id" {
 			isNode = true
 		}
-		fields = append(fields, NewField(d, def, field))
+		fields[field] = NewField(d, def, field)
 	}
 	return &CompositeType{
-		Name:   typeDef.Name,
-		Fields: fields,
-		IsNode: isNode,
+		Name:         typeDef.Name,
+		Fields:       fields,
+		IsNode:       isNode,
+		GraphqlOps:   typeDef.Meta.GraphqlOps,
+		SearchFields: typeDef.Meta.SearchFields,
+		Filters:      typeDef.Meta.Filters,
 	}
 }
 
@@ -125,4 +132,12 @@ func (c *CompositeType) EdgeType() string {
 
 func (c *CompositeType) ConnType() string {
 	return fmt.Sprintf("%ssConnection", utils.ToTitleCase(c.Name))
+}
+
+func (c *CompositeType) FieldType(field string) string {
+	f := c.Fields[field]
+	if f.IsJoinedData {
+		return parser.String
+	}
+	return f.Type
 }

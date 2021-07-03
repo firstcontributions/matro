@@ -1,20 +1,27 @@
 {
-    "pages":[
+    "modules": [
         {
-            "path": "/",
-            "title":"first contributions | feeds",
-            "components":[
-                {
-                    "name": "user-info"
-
-                }
-            ]
+            "name": "users",
+            "data_source": "grpc",
+            "db": "mongo",
+            "entities": ["user", "badge"]
+        },
+        {
+            "name": "story",
+            "data_source": "grpc",
+            "db": "mongo",
+            "entities": ["story", "comment"]
         }
     ],
     "data_schema":{
         "user":{
             "name": "user",
             "type": "object",
+            "meta": {
+                "search_fields": ["firstname", "lastname", "github_handle"],
+                "filters": ["github_handle"],
+                "graphql_ops": "CRUD"
+            },
             "properties":{
                 "id": "id",
                 "firstname": "string",
@@ -38,6 +45,10 @@
         "story": {
             "name": "story",
             "type": "object",
+            "meta": {
+                "graphql_ops": ["CRUD"],
+                "filters": ["created_by"]
+            },
             "properties": {
                 "id": "id",
                 "title": "string",
@@ -45,6 +56,7 @@
                 "abstract": "string",
                 "claps": "int",
                 "is_clappend": "bool",
+                "created_at": "time",
                 "comments": {
                     "type": "list",
                     "paginated": true,
@@ -61,10 +73,14 @@
         "comment": {
             "name": "comment",
             "type": "object",
+            "meta": {
+                "graphql_ops": ["CRUD"]
+            },
             "properties": {
                 "id": "id",
                 "content": "string",
                 "abstract": "string",
+                "created_at": "time",
                 "commented_by": {
                     "type": "object",
                     "schema": "user",
@@ -74,4 +90,5 @@
         }
 
     }
+
 }

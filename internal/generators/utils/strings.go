@@ -40,3 +40,11 @@ func (s *Set) IsElem(e string) bool {
 	_, ok := s.set[e]
 	return ok
 }
+
+func (s *Set) Elems() []string {
+	elems := []string{}
+	for e := range s.Iter() {
+		elems = append(elems, e)
+	}
+	return elems
+}

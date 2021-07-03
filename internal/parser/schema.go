@@ -7,6 +7,7 @@ import (
 
 type Definition struct {
 	DataSchema map[string]*Type `json:"data_schema"`
+	Modules    []Module         `json:"modules"`
 }
 
 func NewDefinition() *Definition {

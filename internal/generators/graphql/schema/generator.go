@@ -6,12 +6,21 @@ import (
 
 	"github.com/firstcontributions/matro/internal/generators/types"
 	"github.com/firstcontributions/matro/internal/generators/utils"
+	"github.com/firstcontributions/matro/internal/parser"
 )
 
 type Generator struct {
 	*types.TypeDefs
+	Path string
 }
 
+func NewGenerator(path string, d *parser.Definition) *Generator {
+	td := types.NewTypeDefs(path, d)
+	return &Generator{
+		Path:     path,
+		TypeDefs: td,
+	}
+}
 func (g *Generator) Generate() error {
 	path := fmt.Sprintf("%s/assets", g.Path)
 	t, err := template.New("graphql").
