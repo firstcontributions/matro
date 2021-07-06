@@ -47,5 +47,5 @@ func (g *Generator) generateCodeFromTemplate(tmpl string, data interface{}, path
 	if err := t.Execute(&b, data); err != nil {
 		return err
 	}
-	return utils.WriteCodeToGoFile(path, filename, b.Bytes())
+	return utils.FormatAndWriteGoCode(path, filename, b.Bytes())
 }

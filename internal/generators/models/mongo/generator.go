@@ -68,7 +68,7 @@ func (g *Generator) generateStore(m Module) error {
 	if err := t.Execute(&b, m); err != nil {
 		return err
 	}
-	return utils.WriteCodeToGoFile(
+	return utils.FormatAndWriteGoCode(
 		fmt.Sprintf("%s/internal/models/%sstore/mongo", g.Path, m.Name),
 		"store.go",
 		b.Bytes(),
@@ -97,7 +97,7 @@ func (g *Generator) generateModel(module string, typ *types.CompositeType) error
 	); err != nil {
 		return err
 	}
-	return utils.WriteCodeToGoFile(
+	return utils.FormatAndWriteGoCode(
 		fmt.Sprintf("%s/internal/models/%sstore/mongo", g.Path, module),
 		typ.Name+".go",
 		b.Bytes(),
@@ -124,7 +124,7 @@ func (g *Generator) generateModelTypes(module string, typ *types.CompositeType) 
 	); err != nil {
 		return err
 	}
-	return utils.WriteCodeToGoFile(
+	return utils.FormatAndWriteGoCode(
 		fmt.Sprintf("%s/internal/models/%sstore", g.Path, module),
 		typ.Name+".go",
 		b.Bytes(),
