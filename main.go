@@ -21,20 +21,30 @@ func main() {
 	}
 
 	if err := generate(d, generatorTypes); err != nil {
+		// this can be a pretty print for the final version
 		panic(err)
 	}
 }
 
+// generate generates code for give types refered by parsed format of input json
 func generate(d *parser.Definition, generatorTypes []generators.Type) error {
+	// this context can be used to close the spinner
 	ctx, cancel := context.WithCancel(context.Background())
+	// make sure context is cancelled once the code generation completed
 	defer cancel()
 	s := spinner.NewSpinner(ctx, "generating")
 	go s.Start()
+
+	// this needs to be taken as an command line argument, hardcoding for now
+	// the default value can be $(pwd)
+	// it wont be handy to use $(pwd) as default in development time
 	basePath := "./__generated"
 
 	for _, gt := range generatorTypes {
 		s.Update(string(gt))
 		g := generators.GetGenerator(gt, basePath, d)
+		// will terminate all generations if any of the generators are
+		// throwing an error
 		if err := g.Generate(); err != nil {
 			return err
 		}
