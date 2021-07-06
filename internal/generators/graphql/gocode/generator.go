@@ -3,7 +3,6 @@ package gocode
 import (
 	"bytes"
 	"fmt"
-	"go/format"
 	"text/template"
 
 	"github.com/firstcontributions/matro/internal/parser"
@@ -36,11 +35,7 @@ func (g *Generator) Generate() error {
 }
 
 func (g *Generator) generateCodeFromTemplate(tmpl string, data interface{}, path, filename string) error {
-	fw, err := utils.GetFileWriter(path, filename)
-	defer fw.Close()
-	if err != nil {
-		return err
-	}
+
 	var b bytes.Buffer
 
 	t, err := template.New("go").
@@ -52,11 +47,5 @@ func (g *Generator) generateCodeFromTemplate(tmpl string, data interface{}, path
 	if err := t.Execute(&b, data); err != nil {
 		return err
 	}
-	code := b.Bytes()
-	code, err = format.Source(code)
-	if err != nil {
-		return err
-	}
-	_, err = fw.Write(code)
-	return err
+	return utils.WriteCodeToGoFile(path, filename, b.Bytes())
 }

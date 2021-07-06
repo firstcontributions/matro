@@ -2,7 +2,7 @@
     "modules": [
         {
             "name": "users",
-            "data_source": "grpc",
+            "data_source": "db",
             "db": "mongo",
             "entities": ["user", "badge"]
         },

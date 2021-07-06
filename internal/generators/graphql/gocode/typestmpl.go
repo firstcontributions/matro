@@ -14,7 +14,7 @@ import (
 
 {{- if .IsNode }}
 func (n *{{ title .Name}}) ID(ctx context.Context) *graphql.ID {
-	return n.id
+	return n.Id
 }
 {{- end}}
 
@@ -28,7 +28,9 @@ type {{ title .Name}} struct {
 
 
 {{- define "fieldDef" }}
-	{{.GoName}} {{.GoType}}
+	{{- if  (not (and .IsJoinedData  .IsList))}}
+	{{.GoName}} {{.GoType true}}
+	{{- end}}
 {{- end}}
 
 `

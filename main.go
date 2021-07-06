@@ -29,4 +29,10 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	gm := generators.GetGenerator(basePath, "mongo", d)
+	err = gm.Generate()
+	if err != nil {
+		panic(err)
+	}
 }

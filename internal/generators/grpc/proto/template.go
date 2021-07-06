@@ -46,7 +46,7 @@ message {{title .Name}} {
 	// {{ plural .Name}} crud operations
 	rpc Get{{- title .Name}}ByID (RefByIDRequest) returns ({{ title .Name}}) {}
 	rpc Get{{- title (plural .Name) }} (Get{{- title (plural .Name)}}Request) returns (Get{{- title (plural .Name)}}Response){};
-	rpc Update{{- title .Name}} (RefByIDRequest) returns ({{ title .Name}}) {}
+	rpc Update{{- title .Name}} ({{- title .Name}}) returns ({{ title .Name}}) {}
 	rpc Delete{{- title .Name}} (RefByIDRequest) returns  (StatusResponse){}
 {{- end}}
 

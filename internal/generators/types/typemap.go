@@ -13,10 +13,18 @@ var graphQLSchemaTypeMap = map[string]string{
 	parser.Float:  "Float",
 	parser.Bool:   "Boolean",
 }
-var goTypeMap = map[string]string{
+var goGraphQLTypeMap = map[string]string{
 	parser.ID:     "graphql.ID",
 	parser.String: "string",
 	parser.Time:   "graphql.Time",
+	parser.Int:    "int32",
+	parser.Float:  "float64",
+	parser.Bool:   "bool",
+}
+var goTypeMap = map[string]string{
+	parser.ID:     "string",
+	parser.String: "string",
+	parser.Time:   "time.Time",
 	parser.Int:    "int32",
 	parser.Float:  "float64",
 	parser.Bool:   "bool",
@@ -39,6 +47,13 @@ func getGraphQLType(t string) string {
 }
 func getGoType(t string) string {
 	if s, ok := goTypeMap[t]; ok {
+		return s
+	}
+	return utils.ToTitleCase(t)
+}
+
+func getGoGraphQLType(t string) string {
+	if s, ok := goGraphQLTypeMap[t]; ok {
 		return s
 	}
 	return utils.ToTitleCase(t)

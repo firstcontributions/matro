@@ -61,13 +61,22 @@ func NewField(d *parser.Definition, typeDef *parser.Type, name string) *Field {
 
 func (f *Field) GoName() string {
 	if f.Name == "id" {
+		return "Id"
+	}
+	if f.IsJoinedData {
 		return f.Name
 	}
 	return utils.ToTitleCase(f.Name)
 }
 
-func (f *Field) GoType() string {
+func (f *Field) GoType(graphqlEnabled ...bool) string {
+	if f.IsJoinedData {
+		return "*string"
+	}
 	t := getGoType(f.Type)
+	if len(graphqlEnabled) > 0 && graphqlEnabled[0] {
+		t = getGoGraphQLType(f.Type)
+	}
 	t = "*" + t
 	if f.IsList {
 		t = "[]" + t
