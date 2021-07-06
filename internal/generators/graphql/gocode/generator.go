@@ -11,11 +11,13 @@ import (
 	"github.com/firstcontributions/matro/internal/generators/utils"
 )
 
+// Generator implements graphql server code generator
 type Generator struct {
 	*types.TypeDefs
 	Path string
 }
 
+// NewGenerator returns an instance of graphql server code generator
 func NewGenerator(path string, d *parser.Definition) *Generator {
 	td := types.NewTypeDefs(path, d)
 	return &Generator{
@@ -24,18 +26,20 @@ func NewGenerator(path string, d *parser.Definition) *Generator {
 	}
 }
 
+// Generate generates all graphql server codes
+// (type definitons, query resolvers, mutation executions, ...)
 func (g *Generator) Generate() error {
 	path := fmt.Sprintf("%s/internal/graphql/schema", g.Path)
 	for _, t := range g.Types {
-		if err := g.generateCodeFromTemplate(typesTpl, t, path, t.Name+".go"); err != nil {
+		if err := g.generateTypes(typesTpl, t, path, t.Name+".go"); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (g *Generator) generateCodeFromTemplate(tmpl string, data interface{}, path, filename string) error {
-
+// generateTypes generate types based on the given template
+func (g *Generator) generateTypes(tmpl string, data interface{}, path, filename string) error {
 	var b bytes.Buffer
 
 	t, err := template.New("go").
