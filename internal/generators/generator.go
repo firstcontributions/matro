@@ -8,19 +8,27 @@ import (
 	"github.com/firstcontributions/matro/internal/parser"
 )
 
+type Type string
 type IGenerator interface {
 	Generate() error
 }
 
-func GetGenerator(path, t string, d *parser.Definition) IGenerator {
+const (
+	TypeGQLSchema  Type = "graphql-schema"
+	TypeGQLServer  Type = "graphql-server"
+	TypeGRPCProto  Type = "grpc-proto"
+	TypeMongoModel Type = "mongo-model"
+)
+
+func GetGenerator(t Type, path string, d *parser.Definition) IGenerator {
 	switch t {
-	case "schema":
+	case TypeGQLSchema:
 		return schema.NewGenerator(path, d)
-	case "gocode":
+	case TypeGQLServer:
 		return gocode.NewGenerator(path, d)
-	case "proto":
+	case TypeGRPCProto:
 		return proto.NewGenerator(path, d)
-	case "mongo":
+	case TypeMongoModel:
 		return mongo.NewGenerator(path, d)
 	}
 
