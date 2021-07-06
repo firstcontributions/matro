@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"go/format"
 	"os"
+	"os/exec"
 )
 
 func EnsurePath(path string) error {
@@ -30,9 +31,15 @@ func WriteCodeToGoFile(path, file string, code []byte) error {
 	if err != nil {
 		return fmt.Errorf("error on writing to file  :%w", err)
 	}
-	return fw.Close()
+
+	if err := fw.Close(); err != nil {
+		return err
+	}
+	return FixImports(fmt.Sprintf("%s/%s", path, file))
+
 }
 
-// func FixImports(file string) error {
-// 	if _, err := exec.Command("goimports ")
-// }
+func FixImports(file string) error {
+	_, err := exec.Command("goimports", "-w", file).Output()
+	return err
+}

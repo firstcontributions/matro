@@ -8,13 +8,13 @@ import (
 	"github.com/firstcontributions/matro/internal/generators/types"
 	"github.com/firstcontributions/matro/internal/generators/utils"
 	"github.com/firstcontributions/matro/internal/parser"
-	"github.com/gertd/go-pluralize"
 )
 
 type Generator struct {
 	*types.TypeDefs
 	modules map[string]Module
 	Path    string
+	Repo    string
 }
 
 type Module struct {
@@ -36,6 +36,7 @@ func NewGenerator(path string, d *parser.Definition) *Generator {
 		TypeDefs: td,
 		modules:  mods,
 		Path:     path,
+		Repo:     d.Repo,
 	}
 }
 
@@ -68,7 +69,7 @@ func (g *Generator) generateStore(m Module) error {
 		return err
 	}
 	return utils.WriteCodeToGoFile(
-		fmt.Sprintf("%s/internal/models/%sstore/mongo", g.Path, pluralize.NewClient().Plural(m.Name)),
+		fmt.Sprintf("%s/internal/models/%sstore/mongo", g.Path, m.Name),
 		"store.go",
 		b.Bytes(),
 	)
@@ -87,15 +88,17 @@ func (g *Generator) generateModel(module string, typ *types.CompositeType) error
 		struct {
 			Module string
 			*types.CompositeType
+			Repo string
 		}{
 			Module:        module,
 			CompositeType: typ,
+			Repo:          g.Repo,
 		},
 	); err != nil {
 		return err
 	}
 	return utils.WriteCodeToGoFile(
-		fmt.Sprintf("%s/internal/models/%sstore/mongo", g.Path, pluralize.NewClient().Plural(module)),
+		fmt.Sprintf("%s/internal/models/%sstore/mongo", g.Path, module),
 		typ.Name+".go",
 		b.Bytes(),
 	)
@@ -122,7 +125,7 @@ func (g *Generator) generateModelTypes(module string, typ *types.CompositeType) 
 		return err
 	}
 	return utils.WriteCodeToGoFile(
-		fmt.Sprintf("%s/internal/models/%sstore", g.Path, pluralize.NewClient().Plural(module)),
+		fmt.Sprintf("%s/internal/models/%sstore", g.Path, module),
 		typ.Name+".go",
 		b.Bytes(),
 	)

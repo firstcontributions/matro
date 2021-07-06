@@ -1,4 +1,5 @@
 {
+    "repo": "github.com/gokultp/__generated",
     "modules": [
         {
             "name": "users",

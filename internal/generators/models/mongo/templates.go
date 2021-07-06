@@ -10,19 +10,19 @@ import (
 )
 
 const (
-	DB{{title (plural .Name) -}} = {{- plural .Name }}
+	DB{{title (plural .Name) -}} = "{{- plural .Name }}"
 	{{- range .Types }}
-	Collection{{title (plural .Name)}} = {{- plural .Name }}
+	Collection{{title (plural .Name)}} = "{{- plural .Name }}"
 	{{- end}}
 )
 
-type {{ title (plural .Name) -}}Store struct {
+type {{ title .Name -}}Store struct {
 	client *mongo.Client
 }
 
-// New {{- title (plural .Name) -}}Store makes connection to mongo server by provided url 
+// New {{- title .Name -}}Store makes connection to mongo server by provided url 
 // and return an instance of the client
-func New {{- title (plural .Name) -}}Store(ctx context.Context, mongoUrl string) (* {{ title (plural .Name) -}}Store, error) {
+func New {{- title .Name -}}Store(ctx context.Context, url string) (* {{ title .Name -}}Store, error) {
 	client, err := mongo.NewClient(options.Client().ApplyURI(url))
 	if err != nil {
 		return nil, err
@@ -33,12 +33,12 @@ func New {{- title (plural .Name) -}}Store(ctx context.Context, mongoUrl string)
 	if err := client.Ping(ctx, readpref.Primary()); err != nil {
 		return nil, err 
 	}
-	return &{{- title (plural .Name) -}}Store {
+	return &{{- title .Name -}}Store {
 		client: client,
 	}, nil
 } 
 
-func (s *{{- title (plural .Name) -}}Store) getCollection (collection string) *mongo.Collection {
+func (s *{{- title .Name -}}Store) getCollection (collection string) *mongo.Collection {
 	return s.client.Database(DB{{ title (plural .Name) -}}).Collection(collection)
 }
 `
@@ -50,14 +50,16 @@ import (
 	"context"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/bson"
+	"{{- .Repo -}}/internal/models/{{- .Module -}}store"
+
 
 )
 
-func (s *{{- title (plural .Module) -}}Store) Get{{- title .Name -}}ByID (ctx types.Context, id string) (* {{plural .Module -}}store. {{- title .Name}}, error) {
+func (s *{{- title .Module -}}Store) Get{{- title .Name -}}ByID (ctx context.Context, id string) (* {{ .Module -}}store. {{- title .Name}}, error) {
 	query := bson.M{
 		"_id": id,
 	}
-	var {{.Name}} {{plural .Module -}}store. {{- title .Name}}
+	var {{.Name}} {{ .Module -}}store. {{- title .Name}}
 	if err := s.getCollection(Collection{{title (plural .Name)}}).FindOne(ctx, query).Decode(&{{- .Name -}}); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, nil
@@ -67,11 +69,10 @@ func (s *{{- title (plural .Module) -}}Store) Get{{- title .Name -}}ByID (ctx ty
 	return &{{- .Name}}, nil
 }
 
-func (s *{{- title (plural .Module) -}}Store) Update{{- title .Name -}} (ctx types.Context, {{.Name}} *{{- plural .Module -}}store. {{- title .Name}}) (* {{plural .Module -}}store. {{- title .Name}}, error) {
+func (s *{{- title .Module -}}Store) Update{{- title .Name -}} (ctx context.Context, {{.Name}} *{{-  .Module -}}store. {{- title .Name}}) (* {{ .Module -}}store. {{- title .Name}}, error) {
 	query := bson.M{
 		"_id": {{.Name -}}.Id,
 	}
-	var {{.Name}} {{ title .Name}}
 	if _, err := s.getCollection(Collection{{title (plural .Name)}}).UpdateOne(ctx, query, {{.Name}}); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, nil
@@ -83,7 +84,7 @@ func (s *{{- title (plural .Module) -}}Store) Update{{- title .Name -}} (ctx typ
 `
 
 const modelTyp = `
-package {{plural .Module -}}store
+package {{ .Module -}}store
 
 type {{title .Name}} struct {
 	{{- counter 0}} 
