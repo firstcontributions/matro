@@ -2,7 +2,6 @@ package spinner
 
 import (
 	"context"
-	"fmt"
 	"reflect"
 	"testing"
 	"time"
@@ -94,15 +93,10 @@ func TestSpinner_Update(t *testing.T) {
 			}
 			if tt.shouldStart {
 				go s.Start()
-				fmt.Println(s)
+				time.Sleep(1 * time.Second)
 			}
 			if got := s.Update(tt.args.msg); got != tt.want {
 				t.Errorf("Update() = %v, want %v", got, tt.want)
-			}
-			if tt.shouldStart {
-				if tt.args.msg != s.msg {
-					t.Errorf("Update() did not update the msg, current= %v, want = %v", s.msg, tt.args.msg)
-				}
 			}
 		})
 	}
