@@ -94,10 +94,9 @@ func (f *Field) GoType(graphqlEnabled ...bool) string {
 	return t
 }
 
-// FormattedName returns the formatted graphql name for the field
+// GraphQLFormattedName returns the formatted graphql name for the field
 // if it is queiriable it formats like field(args...):Type!
-// TODO: rename the func
-func (f *Field) FormattedName() string {
+func (f *Field) GraphQLFormattedName() string {
 	if !f.IsQuery {
 		return f.Name
 	}
@@ -108,9 +107,8 @@ func (f *Field) FormattedName() string {
 	return fmt.Sprintf("%s(%s)", f.Name, strings.Join(args, ", "))
 }
 
-// FortmattedType return the graphql type name
-// TODO:rename
-func (f *Field) FortmattedType() string {
+// GraphQLFortmattedType return the graphql type name
+func (f *Field) GraphQLFortmattedType() string {
 	t := getGraphQLType(f.Type)
 	if f.IsPaginated {
 		t = fmt.Sprintf("%ssConnection", utils.ToTitleCase(f.Type))
@@ -144,9 +142,8 @@ func NewCompositeType(d *parser.Definition, typeDef *parser.Type) *CompositeType
 	}
 }
 
-// EdgeTypes return the paginated fields that can be an edge
-// TODO: rename
-func (c *CompositeType) EdgeTypes() *utils.Set {
+// EdgeFields return the paginated fields that can be an edge
+func (c *CompositeType) EdgeFields() *utils.Set {
 	s := utils.NewSet()
 	for _, f := range c.Fields {
 		if f.IsPaginated && f.IsList {
@@ -156,20 +153,17 @@ func (c *CompositeType) EdgeTypes() *utils.Set {
 	return s
 }
 
-// EdgeType returns the edge type name
-// TODO: rename
-func (c *CompositeType) EdgeType() string {
+// EdgeName returns the edge type name
+func (c *CompositeType) EdgeName() string {
 	return fmt.Sprintf("%sEdge", utils.ToTitleCase(c.Name))
 }
 
-// ConnType returns the connection type name
-// TODO: rename
-func (c *CompositeType) ConnType() string {
+// ConnectionName returns the connection type name
+func (c *CompositeType) ConnectionName() string {
 	return fmt.Sprintf("%ssConnection", utils.ToTitleCase(c.Name))
 }
 
 // FieldType return the type of the given field
-// TODO: remove if not used
 func (c *CompositeType) FieldType(field string) string {
 	f := c.Fields[field]
 	if f.IsJoinedData {

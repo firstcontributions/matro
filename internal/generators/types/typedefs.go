@@ -21,7 +21,7 @@ func NewTypeDefs(path string, d *parser.Definition) *TypeDefs {
 	edges := utils.NewSet()
 	for _, def := range d.DataSchema {
 		t := NewCompositeType(d, def)
-		edges.Union(t.EdgeTypes())
+		edges.Union(t.EdgeFields())
 		types = append(types, t)
 	}
 	return &TypeDefs{

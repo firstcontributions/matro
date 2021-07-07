@@ -24,7 +24,7 @@ type PageInfo {
 
 
 {{- define "field"}}
-	{{.FormattedName}}: {{.FortmattedType}}
+	{{.GraphQLFormattedName}}: {{.GraphQLFortmattedType}}
 {{- end}}
 
 
@@ -46,7 +46,7 @@ type {{title .Name}} {
 
 {{- define "edgeDef" }} 
 
-type {{.EdgeType}} {
+type {{.EdgeName}} {
 	node: {{title .Name}}!
 	cursor: String!
 }
@@ -55,8 +55,8 @@ type {{.EdgeType}} {
 
 {{- define "connectionDef" }} 
 
-type {{.ConnType}} {
-	edges: [{{ .EdgeType}}]!
+type {{.ConnectionName}} {
+	edges: [{{ .EdgeName}}]!
 	pageInfo: PageInfo!
 }
 {{- end}}
