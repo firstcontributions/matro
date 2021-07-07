@@ -69,7 +69,7 @@ func TestSpinner_Update(t *testing.T) {
 			args: args{
 				msg: "hello world",
 			},
-			want: ErrNotStarted,
+			want: errNotStarted,
 		},
 		{
 			name: "should pass the message to the channel",

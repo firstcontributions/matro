@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-var ErrNotStarted = errors.New("spinner.Start routine should be called before Update")
+var errNotStarted = errors.New("spinner.Start routine should be called before Update")
 
 // Spinner implements a command line spinner
 type Spinner struct {
@@ -38,7 +38,7 @@ func NewSpinner(ctx context.Context, msgPrefix string) *Spinner {
 // 		msg: the message to be printed
 func (s *Spinner) Update(msg string) error {
 	if !s.started {
-		return ErrNotStarted
+		return errNotStarted
 	}
 	s.c <- msg
 	return nil
