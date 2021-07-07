@@ -2,9 +2,12 @@ package spinner
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 )
+
+var ErrNotStarted = errors.New("spinner.Start routine should be called before Update")
 
 // Spinner implements a command line spinner
 type Spinner struct {
@@ -12,6 +15,7 @@ type Spinner struct {
 	c         chan string
 	msg       string
 	msgPrefix string
+	started   bool
 }
 
 // NewSpinner creates an instance of cmd line spinner
@@ -32,8 +36,12 @@ func NewSpinner(ctx context.Context, msgPrefix string) *Spinner {
 // by default the msg will be an empty string
 // 	Args:
 // 		msg: the message to be printed
-func (s *Spinner) Update(msg string) {
+func (s *Spinner) Update(msg string) error {
+	if !s.started {
+		return ErrNotStarted
+	}
 	s.c <- msg
+	return nil
 }
 
 // Start should be called as a go routine
@@ -41,6 +49,7 @@ func (s *Spinner) Update(msg string) {
 // change the message in the cmd line if a new message is available
 // also responsible for an ascii spinner
 func (s *Spinner) Start() {
+	s.started = true
 	// ASCII spinner chars
 	spin := `\|/-`
 	// Idx used to select a char from ascii spin chars
@@ -74,6 +83,5 @@ func (s *Spinner) Start() {
 			suffIdx++
 			suffIdx %= len(suf)
 		}
-
 	}
 }
