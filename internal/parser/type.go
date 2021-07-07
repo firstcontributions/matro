@@ -62,6 +62,7 @@ func (m *Ops) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// Type encapsulates the type definition meta data
 type Type struct {
 	Name       string           `json:"name"`
 	Type       string           `json:"type"`
