@@ -20,7 +20,7 @@ func NewDefinition() *Definition {
 }
 
 // ParseFromFile parses the definitions from the given json file
-// returns an instance of the same object and error if any
+// returns an instance of the same object and error if any.
 //
 // the duplicate return of object helps in chaining the functions like
 // NewDefinition().ParseFromFile

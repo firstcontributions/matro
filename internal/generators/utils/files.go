@@ -41,7 +41,7 @@ func FormatAndWriteGoCode(path, file string, code []byte) error {
 	if err != nil {
 		return fmt.Errorf("error on formatting code :%w", err)
 	}
-	err = writeCode(file, path, code)
+	err = writeCode(path, file, code)
 	if err != nil {
 		return fmt.Errorf("error on formatting code :%w", err)
 	}
