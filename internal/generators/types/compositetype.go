@@ -8,6 +8,8 @@ import (
 	"github.com/firstcontributions/matro/internal/parser"
 )
 
+// CompositeType defines a non trivial type with a set
+// of informations like what all fields, opeations supported, etc.
 type CompositeType struct {
 	Name          string
 	Fields        map[string]*Field
@@ -18,6 +20,9 @@ type CompositeType struct {
 	GraphqlOps    *parser.Ops
 	SearchFields  []string
 }
+
+// Field defines the field meta data by its type, is it a list,
+// is it nullable etc..
 type Field struct {
 	Name         string
 	Type         string
@@ -30,6 +35,8 @@ type Field struct {
 	IsJoinedData bool
 }
 
+// paginationArgs are the defualt pagination arguments should be
+//  there with graphql relay paginated queries
 var paginationArgs = []Field{
 	{Name: "first", Type: parser.Int},
 	{Name: "last", Type: parser.Int},
@@ -37,6 +44,7 @@ var paginationArgs = []Field{
 	{Name: "before", Type: parser.String},
 }
 
+// NewField returns an instance of the field
 func NewField(d *parser.Definition, typeDef *parser.Type, name string) *Field {
 	if typeDef.IsPrimitive() {
 		return &Field{
@@ -59,6 +67,7 @@ func NewField(d *parser.Definition, typeDef *parser.Type, name string) *Field {
 	return f
 }
 
+// GoName return the field name to be used in go code
 func (f *Field) GoName() string {
 	if f.Name == "id" {
 		return "Id"
@@ -69,6 +78,7 @@ func (f *Field) GoName() string {
 	return utils.ToTitleCase(f.Name)
 }
 
+// GoType return the gotype to be used in go code
 func (f *Field) GoType(graphqlEnabled ...bool) string {
 	if f.IsJoinedData {
 		return "*string"
@@ -83,6 +93,10 @@ func (f *Field) GoType(graphqlEnabled ...bool) string {
 	}
 	return t
 }
+
+// FormattedName returns the formatted graphql name for the field
+// if it is queiriable it formats like field(args...):Type!
+// TODO: rename the func
 func (f *Field) FormattedName() string {
 	if !f.IsQuery {
 		return f.Name
@@ -94,6 +108,8 @@ func (f *Field) FormattedName() string {
 	return fmt.Sprintf("%s(%s)", f.Name, strings.Join(args, ", "))
 }
 
+// FortmattedType return the graphql type name
+// TODO:rename
 func (f *Field) FortmattedType() string {
 	t := getGraphQLType(f.Type)
 	if f.IsPaginated {
@@ -107,6 +123,8 @@ func (f *Field) FortmattedType() string {
 	}
 	return t
 }
+
+// NewCompositeType return an instance of the CompositeType
 func NewCompositeType(d *parser.Definition, typeDef *parser.Type) *CompositeType {
 	fields := map[string]*Field{}
 	isNode := false
@@ -126,6 +144,8 @@ func NewCompositeType(d *parser.Definition, typeDef *parser.Type) *CompositeType
 	}
 }
 
+// EdgeTypes return the paginated fields that can be an edge
+// TODO: rename
 func (c *CompositeType) EdgeTypes() *utils.Set {
 	s := utils.NewSet()
 	for _, f := range c.Fields {
@@ -135,14 +155,21 @@ func (c *CompositeType) EdgeTypes() *utils.Set {
 	}
 	return s
 }
+
+// EdgeType returns the edge type name
+// TODO: rename
 func (c *CompositeType) EdgeType() string {
 	return fmt.Sprintf("%sEdge", utils.ToTitleCase(c.Name))
 }
 
+// ConnType returns the connection type name
+// TODO: rename
 func (c *CompositeType) ConnType() string {
 	return fmt.Sprintf("%ssConnection", utils.ToTitleCase(c.Name))
 }
 
+// FieldType return the type of the given field
+// TODO: remove if not used
 func (c *CompositeType) FieldType(field string) string {
 	f := c.Fields[field]
 	if f.IsJoinedData {

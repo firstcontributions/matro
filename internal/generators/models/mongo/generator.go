@@ -10,6 +10,7 @@ import (
 	"github.com/firstcontributions/matro/internal/parser"
 )
 
+// Generator implements mongo model code generator
 type Generator struct {
 	*types.TypeDefs
 	modules map[string]Module
@@ -17,11 +18,13 @@ type Generator struct {
 	Repo    string
 }
 
+// Module encapsulates module metadata and types associated
 type Module struct {
 	parser.Module
 	Types []*types.CompositeType
 }
 
+// NewGenerator returns an instance of mongo model generator
 func NewGenerator(path string, d *parser.Definition) *Generator {
 	td := types.NewTypeDefs(path, d)
 	mods := map[string]Module{}
@@ -40,6 +43,8 @@ func NewGenerator(path string, d *parser.Definition) *Generator {
 	}
 }
 
+// Generate generates a store interface, mongo implementation for the interface,
+// data schema, crud operations for all the types in all given modules
 func (g *Generator) Generate() error {
 	for _, m := range g.modules {
 		if err := g.generateStore(m); err != nil {
@@ -57,6 +62,8 @@ func (g *Generator) Generate() error {
 	return nil
 }
 
+// generateStore generates a mongo implementation for the store interface,
+// constants associated, connection pool manager etc
 func (g *Generator) generateStore(m Module) error {
 	t, err := template.New("mongo_store").
 		Funcs(g.FuncMap()).
@@ -75,6 +82,10 @@ func (g *Generator) generateStore(m Module) error {
 	)
 }
 
+// generateModel generates crud operations for the given types
+// supported operations:
+// Create, GetAll(search, filter, pagination),
+// GetByID, Update, Delete
 func (g *Generator) generateModel(module string, typ *types.CompositeType) error {
 	t, err := template.New("mongo_model").
 		Funcs(g.FuncMap()).
@@ -104,6 +115,7 @@ func (g *Generator) generateModel(module string, typ *types.CompositeType) error
 	)
 }
 
+// generateModelTypes generates data schema for the given types
 func (g *Generator) generateModelTypes(module string, typ *types.CompositeType) error {
 	t, err := template.New("mongo_model_type").
 		Funcs(g.FuncMap()).
