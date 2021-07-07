@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-var errNotStarted = errors.New("spinner.Start routine should be called before Update")
+var errNotStarted = errors.New("Start routine should be called before Update")
 
 // Spinner implements a command line spinner
 type Spinner struct {
