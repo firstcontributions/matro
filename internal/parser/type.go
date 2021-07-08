@@ -26,6 +26,10 @@ const (
 	List = "list"
 )
 
+var (
+	errEmptyType = errors.New("Type can't be empty")
+)
+
 // Meta defines the data schema meta data properties
 type Meta struct {
 	SearchFields []string `json:"search_fields"`
@@ -78,7 +82,7 @@ func validateTypeAndGetFirstNonEmptyIdx(b []byte) (int, error) {
 	// type cannont be an empty data
 	ln := len(b)
 	if ln == 0 {
-		return 0, errors.New("Type can't be empty")
+		return 0, errEmptyType
 	}
 	// find the first non-space character
 	var i int
@@ -87,7 +91,7 @@ func validateTypeAndGetFirstNonEmptyIdx(b []byte) (int, error) {
 	}
 	if i == ln {
 		// cannot be empty string
-		return 0, errors.New("Type can't be empty")
+		return 0, errEmptyType
 	}
 	return i, nil
 }
