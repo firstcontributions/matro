@@ -107,7 +107,7 @@ func (t *Type) UnmarshalJSON(b []byte) error {
 	if b[i] != '{' {
 		// this should be a string if not in the form of an obejct leteral
 		// remove all the double quotes (data could be in the format "int")
-		t.Type = strings.Replace(string(b), "\"", "", -1)
+		t.Type = strings.ReplaceAll(string(b), "\"", "")
 		return nil
 	}
 	// if object literal, use normal json unmarshal func for the struct
