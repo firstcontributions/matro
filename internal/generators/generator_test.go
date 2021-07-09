@@ -8,6 +8,7 @@ import (
 	"github.com/firstcontributions/matro/internal/parser"
 )
 
+// TestGetGenerator should test all possibilies of generator factory
 func TestGetGenerator(t *testing.T) {
 	d := &parser.Definition{
 		Modules: []parser.Module{},

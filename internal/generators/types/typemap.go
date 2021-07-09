@@ -50,33 +50,33 @@ var grpcTypeMap = map[string]string{
 	parser.Bool:   "bool",
 }
 
-// getGraphQLType returns graphql schema type from matro type
-func getGraphQLType(t string) string {
+// GetGraphQLType returns graphql schema type from matro type
+func GetGraphQLType(t string) string {
 	if s, ok := graphQLSchemaTypeMap[t]; ok {
 		return s
 	}
 	return utils.ToTitleCase(t)
 }
 
-// getGoType returns go type from matro type
-func getGoType(t string) string {
+// GetGoType returns go type from matro type
+func GetGoType(t string) string {
 	if s, ok := goTypeMap[t]; ok {
 		return s
 	}
 	return utils.ToTitleCase(t)
 }
 
-// getGoGraphQLType returns graphql go implementation
+// GetGoGraphQLType returns graphql go implementation
 //  type from matro type
-func getGoGraphQLType(t string) string {
+func GetGoGraphQLType(t string) string {
 	if s, ok := goGraphQLTypeMap[t]; ok {
 		return s
 	}
 	return utils.ToTitleCase(t)
 }
 
-// getGRPCType protobuf type from matro type
-func getGRPCType(t string) string {
+// GetGRPCType protobuf type from matro type
+func GetGRPCType(t string) string {
 	if s, ok := grpcTypeMap[t]; ok {
 		return s
 	}

@@ -1,13 +1,11 @@
 package mongo
 
 import (
-	"bytes"
 	"fmt"
-	"text/template"
 
 	"github.com/firstcontributions/matro/internal/generators/types"
-	"github.com/firstcontributions/matro/internal/generators/utils"
 	"github.com/firstcontributions/matro/internal/parser"
+	"github.com/firstcontributions/matro/internal/writer"
 )
 
 // Generator implements mongo model code generator
@@ -65,20 +63,11 @@ func (g *Generator) Generate() error {
 // generateStore generates a mongo implementation for the store interface,
 // constants associated, connection pool manager etc
 func (g *Generator) generateStore(m Module) error {
-	t, err := template.New("mongo_store").
-		Funcs(g.FuncMap()).
-		Parse(storeTpl)
-	if err != nil {
-		return err
-	}
-	var b bytes.Buffer
-	if err := t.Execute(&b, m); err != nil {
-		return err
-	}
-	return utils.FormatAndWriteGoCode(
+	return writer.CompileAndWrite(
 		fmt.Sprintf("%s/internal/models/%sstore/mongo", g.Path, m.Name),
 		"store.go",
-		b.Bytes(),
+		storeTpl,
+		m,
 	)
 }
 
@@ -87,15 +76,11 @@ func (g *Generator) generateStore(m Module) error {
 // Create, GetAll(search, filter, pagination),
 // GetByID, Update, Delete
 func (g *Generator) generateModel(module string, typ *types.CompositeType) error {
-	t, err := template.New("mongo_model").
-		Funcs(g.FuncMap()).
-		Parse(modelTpl)
-	if err != nil {
-		return err
-	}
-	var b bytes.Buffer
-	if err := t.Execute(
-		&b,
+
+	return writer.CompileAndWrite(
+		fmt.Sprintf("%s/internal/models/%sstore/mongo", g.Path, module),
+		typ.Name+".go",
+		modelTpl,
 		struct {
 			Module string
 			*types.CompositeType
@@ -105,27 +90,16 @@ func (g *Generator) generateModel(module string, typ *types.CompositeType) error
 			CompositeType: typ,
 			Repo:          g.Repo,
 		},
-	); err != nil {
-		return err
-	}
-	return utils.FormatAndWriteGoCode(
-		fmt.Sprintf("%s/internal/models/%sstore/mongo", g.Path, module),
-		typ.Name+".go",
-		b.Bytes(),
 	)
+
 }
 
 // generateModelTypes generates data schema for the given types
 func (g *Generator) generateModelTypes(module string, typ *types.CompositeType) error {
-	t, err := template.New("mongo_model_type").
-		Funcs(g.FuncMap()).
-		Parse(modelTyp)
-	if err != nil {
-		return err
-	}
-	var b bytes.Buffer
-	if err := t.Execute(
-		&b,
+	return writer.CompileAndWrite(
+		fmt.Sprintf("%s/internal/models/%sstore", g.Path, module),
+		typ.Name+".go",
+		modelTyp,
 		struct {
 			Module string
 			*types.CompositeType
@@ -133,12 +107,5 @@ func (g *Generator) generateModelTypes(module string, typ *types.CompositeType) 
 			Module:        module,
 			CompositeType: typ,
 		},
-	); err != nil {
-		return err
-	}
-	return utils.FormatAndWriteGoCode(
-		fmt.Sprintf("%s/internal/models/%sstore", g.Path, module),
-		typ.Name+".go",
-		b.Bytes(),
 	)
 }

@@ -1,14 +1,12 @@
 package gocode
 
 import (
-	"bytes"
 	"fmt"
-	"text/template"
 
 	"github.com/firstcontributions/matro/internal/parser"
+	"github.com/firstcontributions/matro/internal/writer"
 
 	"github.com/firstcontributions/matro/internal/generators/types"
-	"github.com/firstcontributions/matro/internal/generators/utils"
 )
 
 // Generator implements graphql server code generator
@@ -40,16 +38,10 @@ func (g *Generator) Generate() error {
 
 // generateTypes generate types based on the given template
 func (g *Generator) generateTypes(tmpl string, data interface{}, path, filename string) error {
-	var b bytes.Buffer
-
-	t, err := template.New("go").
-		Funcs(g.FuncMap()).
-		Parse(tmpl)
-	if err != nil {
-		return err
-	}
-	if err := t.Execute(&b, data); err != nil {
-		return err
-	}
-	return utils.FormatAndWriteGoCode(path, filename, b.Bytes())
+	return writer.CompileAndWrite(
+		path,
+		filename,
+		tmpl,
+		data,
+	)
 }

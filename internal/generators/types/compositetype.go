@@ -83,9 +83,9 @@ func (f *Field) GoType(graphqlEnabled ...bool) string {
 	if f.IsJoinedData {
 		return "*string"
 	}
-	t := getGoType(f.Type)
+	t := GetGoType(f.Type)
 	if len(graphqlEnabled) > 0 && graphqlEnabled[0] {
-		t = getGoGraphQLType(f.Type)
+		t = GetGoGraphQLType(f.Type)
 	}
 	t = "*" + t
 	if f.IsList {
@@ -102,14 +102,14 @@ func (f *Field) GraphQLFormattedName() string {
 	}
 	args := []string{}
 	for _, a := range f.Args {
-		args = append(args, fmt.Sprintf("%s: %s", a.Name, getGraphQLType(a.Type)))
+		args = append(args, fmt.Sprintf("%s: %s", a.Name, GetGraphQLType(a.Type)))
 	}
 	return fmt.Sprintf("%s(%s)", f.Name, strings.Join(args, ", "))
 }
 
 // GraphQLFortmattedType return the graphql type name
 func (f *Field) GraphQLFortmattedType() string {
-	t := getGraphQLType(f.Type)
+	t := GetGraphQLType(f.Type)
 	if f.IsPaginated {
 		t = fmt.Sprintf("%ssConnection", utils.ToTitleCase(f.Type))
 	}
