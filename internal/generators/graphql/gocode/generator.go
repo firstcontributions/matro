@@ -1,6 +1,7 @@
 package gocode
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/firstcontributions/matro/internal/parser"
@@ -26,10 +27,10 @@ func NewGenerator(path string, d *parser.Definition) *Generator {
 
 // Generate generates all graphql server codes
 // (type definitons, query resolvers, mutation executions, ...)
-func (g *Generator) Generate() error {
+func (g *Generator) Generate(ctx context.Context) error {
 	path := fmt.Sprintf("%s/internal/graphql/schema", g.Path)
 	for _, t := range g.Types {
-		if err := g.generateTypes(typesTpl, t, path, t.Name+".go"); err != nil {
+		if err := g.generateTypes(ctx, typesTpl, t, path, t.Name+".go"); err != nil {
 			return err
 		}
 	}
@@ -37,8 +38,9 @@ func (g *Generator) Generate() error {
 }
 
 // generateTypes generate types based on the given template
-func (g *Generator) generateTypes(tmpl string, data interface{}, path, filename string) error {
+func (g *Generator) generateTypes(ctx context.Context, tmpl string, data interface{}, path, filename string) error {
 	return writer.CompileAndWrite(
+		ctx,
 		path,
 		filename,
 		tmpl,

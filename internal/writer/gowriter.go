@@ -1,6 +1,7 @@
 package writer
 
 import (
+	"context"
 	"go/format"
 	"io/ioutil"
 	"os"
@@ -20,16 +21,17 @@ func NewGoWriter(path, file string) *GoWriter {
 	}
 }
 
-func (w *GoWriter) Format() error {
-	if d, err := format.Source(w.data); err != nil {
+// Format formats gocode using gofmt and goimports
+func (w *GoWriter) Format(ctx context.Context) error {
+	d, err := format.Source(w.data)
+	if err != nil {
 		return err
-	} else {
-		w.data = d
 	}
-	return w.runGoImports()
+	w.data = d
+	return w.runGoImports(ctx)
 }
 
-func (w *GoWriter) runGoImports() error {
+func (w *GoWriter) runGoImports(ctx context.Context) error {
 	if err := w.write("/tmp/matro", "tmp.go"); err != nil {
 		return err
 	}
@@ -37,10 +39,10 @@ func (w *GoWriter) runGoImports() error {
 	if err := exec.Command("goimports", "-w", filepath).Run(); err != nil {
 		return err
 	}
-	if d, err := ioutil.ReadFile(filepath); err != nil {
+	d, err := ioutil.ReadFile(filepath)
+	if err != nil {
 		return err
-	} else {
-		w.data = d
 	}
+	w.data = d
 	return os.Remove(filepath)
 }

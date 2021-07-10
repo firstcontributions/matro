@@ -8,6 +8,7 @@ import (
 	"github.com/gertd/go-pluralize"
 )
 
+// FuncMap returns a map of functions to be used for template generation
 func FuncMap() template.FuncMap {
 	p := pluralize.NewClient()
 

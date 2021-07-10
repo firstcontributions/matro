@@ -1,14 +1,18 @@
 package writer
 
 import (
+	"context"
+	"fmt"
 	"strings"
+
+	"github.com/firstcontributions/matro/pkg/spinner"
 )
 
-// ICodeWriter implements a code writer
+// IWriter implements a code writer
 type IWriter interface {
-	Compile(string, interface{}) error
-	Format() error
-	Write() error
+	Compile(context.Context, string, interface{}) error
+	Format(context.Context) error
+	Write(context.Context) error
 }
 
 // Type will be used to define enums for code types
@@ -22,6 +26,7 @@ const (
 	TypeText
 )
 
+// GetWriter is a factory method for writers
 func GetWriter(path, filename string) IWriter {
 	switch getFileExtension(filename) {
 	case "go":
@@ -38,21 +43,25 @@ func getFileExtension(file string) string {
 	return tmp[1]
 }
 
+// CompileAndWrite will compile the given template, autoformat
+// and write to file
 func CompileAndWrite(
+	ctx context.Context,
 	path string,
 	filename string,
 	tmpl string,
 	data interface{},
 ) error {
 	w := GetWriter(path, filename)
-	if err := w.Compile(tmpl, data); err != nil {
+	getSpinner(ctx).Update(fmt.Sprintf("%s/%s", path, filename))
+	if err := w.Compile(ctx, tmpl, data); err != nil {
 		return err
 	}
-	if err := w.Format(); err != nil {
+	if err := w.Format(ctx); err != nil {
 		return err
 	}
-	if err := w.Write(); err != nil {
-		return err
-	}
-	return nil
+	return w.Write(ctx)
+}
+func getSpinner(ctx context.Context) *spinner.Spinner {
+	return ctx.Value("spinner").(*spinner.Spinner)
 }

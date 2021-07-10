@@ -11,7 +11,6 @@ var errNotStarted = errors.New("Start routine should be called before Update")
 
 // Spinner implements a command line spinner
 type Spinner struct {
-	ctx       context.Context
 	c         chan string
 	msg       string
 	msgPrefix string
@@ -24,9 +23,8 @@ type Spinner struct {
 // when context is cancelled
 // 		msgPrefix:  a message prefix to be printed on
 // begining of every line
-func NewSpinner(ctx context.Context, msgPrefix string) *Spinner {
+func NewSpinner(msgPrefix string) *Spinner {
 	return &Spinner{
-		ctx:       ctx,
 		c:         make(chan string),
 		msgPrefix: msgPrefix,
 	}
@@ -48,7 +46,7 @@ func (s *Spinner) Update(msg string) error {
 // this func listen for new messages on the spinner channel
 // change the message in the cmd line if a new message is available
 // also responsible for an ascii spinner
-func (s *Spinner) Start() {
+func (s *Spinner) Start(ctx context.Context) {
 	s.started = true
 	// ASCII spinner chars
 	spin := `\|/-`
@@ -66,8 +64,9 @@ func (s *Spinner) Start() {
 			case msg := <-s.c:
 				suffIdx = 0
 				s.msg = msg
-			case <-s.ctx.Done():
+			case <-ctx.Done():
 				close(s.c)
+				fmt.Printf("\033[2K\rDone.")
 				return
 			}
 		}

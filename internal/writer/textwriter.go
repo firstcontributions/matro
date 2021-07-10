@@ -2,6 +2,7 @@ package writer
 
 import (
 	"bytes"
+	"context"
 	"text/template"
 
 	"github.com/firstcontributions/matro/internal/generators/utils"
@@ -23,7 +24,7 @@ func NewTextWriter(path, filename string) *TextWriter {
 }
 
 // Compile should compile the template and get the code as bytes
-func (w *TextWriter) Compile(tmpl string, data interface{}) error {
+func (w *TextWriter) Compile(ctx context.Context, tmpl string, data interface{}) error {
 	t, err := template.New("t").
 		Funcs(FuncMap()).
 		Parse(tmpl)
@@ -42,7 +43,7 @@ func (w *TextWriter) Compile(tmpl string, data interface{}) error {
 // Format is supposed to format the code, as text formatter can be
 // any type of code we cant implement any formatter. This leave as
 // an empty function to implement Writer interface
-func (w *TextWriter) Format() error {
+func (w *TextWriter) Format(ctx context.Context) error {
 	return nil
 }
 
@@ -59,7 +60,7 @@ func (w *TextWriter) write(path, filename string) error {
 }
 
 // Write will write contents to given file
-func (w *TextWriter) Write() error {
+func (w *TextWriter) Write(ctx context.Context) error {
 	fw, err := utils.GetFileWriter(w.path, w.filename)
 	if err != nil {
 		return err

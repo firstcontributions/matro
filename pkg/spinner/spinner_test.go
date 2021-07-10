@@ -10,10 +10,8 @@ import (
 
 func TestNewSpinner(t *testing.T) {
 	type args struct {
-		ctx       context.Context
 		msgPrefix string
 	}
-	ctx := context.TODO()
 	tests := []struct {
 		name string
 		args args
@@ -21,9 +19,8 @@ func TestNewSpinner(t *testing.T) {
 	}{
 		{
 			name: "should return an instance of NewSpinner",
-			args: args{ctx: ctx, msgPrefix: "pref"},
+			args: args{msgPrefix: "pref"},
 			want: &Spinner{
-				ctx:       ctx,
 				msg:       "",
 				msgPrefix: "pref",
 				c:         make(chan string),
@@ -32,8 +29,7 @@ func TestNewSpinner(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := NewSpinner(tt.args.ctx, tt.args.msgPrefix); !reflect.DeepEqual(got.ctx, tt.want.ctx) ||
-				!reflect.DeepEqual(got.msgPrefix, tt.want.msgPrefix) ||
+			if got := NewSpinner(tt.args.msgPrefix); !reflect.DeepEqual(got.msgPrefix, tt.want.msgPrefix) ||
 				!reflect.DeepEqual(got.msg, tt.want.msg) {
 				t.Errorf("NewSpinner() = %v, want %v", got, tt.want)
 			}
@@ -42,8 +38,8 @@ func TestNewSpinner(t *testing.T) {
 }
 
 func TestSpinner_Update(t *testing.T) {
+	ctx := context.TODO()
 	type fields struct {
-		ctx       context.Context
 		c         chan string
 		msg       string
 		msgPrefix string
@@ -61,8 +57,7 @@ func TestSpinner_Update(t *testing.T) {
 		{
 			name: "should return an error if start routine is not called",
 			fields: fields{
-				ctx: context.TODO(),
-				c:   make(chan string),
+				c: make(chan string),
 			},
 			shouldStart: false,
 			args: args{
@@ -73,8 +68,7 @@ func TestSpinner_Update(t *testing.T) {
 		{
 			name: "should pass the message to the channel",
 			fields: fields{
-				ctx: context.TODO(),
-				c:   make(chan string),
+				c: make(chan string),
 			},
 			args: args{
 				msg: "hello world",
@@ -86,13 +80,12 @@ func TestSpinner_Update(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &Spinner{
-				ctx:       tt.fields.ctx,
 				c:         tt.fields.c,
 				msg:       tt.fields.msg,
 				msgPrefix: tt.fields.msgPrefix,
 			}
 			if tt.shouldStart {
-				go s.Start()
+				go s.Start(ctx)
 				time.Sleep(1 * time.Second)
 			}
 			if got := s.Update(tt.args.msg); got != tt.want {
@@ -105,8 +98,8 @@ func TestSpinner_Update(t *testing.T) {
 func TestSpinner_Start(t *testing.T) {
 	t.Run("should close the channel once the ctx is cancelled", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
-		s := NewSpinner(ctx, "a")
-		go s.Start()
+		s := NewSpinner("a")
+		go s.Start(ctx)
 		cancel()
 		time.Sleep(1 * time.Second)
 		if !isChanClosed(s.c) {

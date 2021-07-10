@@ -1,6 +1,8 @@
 package generators
 
 import (
+	"context"
+
 	"github.com/firstcontributions/matro/internal/generators/graphql/gocode"
 	"github.com/firstcontributions/matro/internal/generators/graphql/schema"
 	"github.com/firstcontributions/matro/internal/generators/grpc/proto"
@@ -13,7 +15,7 @@ type Type int
 
 // IGenerator is an interface with a generate function
 type IGenerator interface {
-	Generate() error
+	Generate(ctx context.Context) error
 }
 
 const (

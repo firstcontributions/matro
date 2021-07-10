@@ -1,6 +1,7 @@
 package writer
 
 import (
+	"context"
 	"reflect"
 	"testing"
 )
@@ -47,6 +48,7 @@ func TestTextWriter_Compile(t *testing.T) {
 		data []byte
 	}
 	type args struct {
+		ctx  context.Context
 		t    string
 		data interface{}
 	}
@@ -62,6 +64,7 @@ func TestTextWriter_Compile(t *testing.T) {
 			args: args{
 				t:    validTemplate,
 				data: data,
+				ctx:  context.TODO(),
 			},
 			wantErr: false,
 			want:    "Hello World",
@@ -71,6 +74,7 @@ func TestTextWriter_Compile(t *testing.T) {
 			args: args{
 				t:    inValidTemplate,
 				data: data,
+				ctx:  context.TODO(),
 			},
 			wantErr: true,
 		},
@@ -80,7 +84,7 @@ func TestTextWriter_Compile(t *testing.T) {
 			w := &TextWriter{
 				data: tt.fields.data,
 			}
-			if err := w.Compile(tt.args.t, tt.args.data); (err != nil) != tt.wantErr {
+			if err := w.Compile(tt.args.ctx, tt.args.t, tt.args.data); (err != nil) != tt.wantErr {
 				t.Errorf("TextWriter.Compile() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			if !tt.wantErr && tt.want != string(w.data) {
@@ -99,10 +103,12 @@ func TestTextWriter_Format(t *testing.T) {
 		name    string
 		fields  fields
 		wantErr bool
+		ctx     context.Context
 	}{
 		{
 			name:    "should not throw any errors",
 			wantErr: false,
+			ctx:     context.TODO(),
 		},
 	}
 	for _, tt := range tests {
@@ -110,7 +116,7 @@ func TestTextWriter_Format(t *testing.T) {
 			w := &TextWriter{
 				data: tt.fields.data,
 			}
-			if err := w.Format(); (err != nil) != tt.wantErr {
+			if err := w.Format(tt.ctx); (err != nil) != tt.wantErr {
 				t.Errorf("TextWriter.Format() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})

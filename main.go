@@ -32,20 +32,19 @@ func generate(d *parser.Definition, generatorTypes []generators.Type) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	// make sure context is cancelled once the code generation completed
 	defer cancel()
-	s := spinner.NewSpinner(ctx, "generating")
-	go s.Start()
+	s := spinner.NewSpinner("generating")
+	go s.Start(ctx)
 
 	// this needs to be taken as an command line argument, hardcoding for now
 	// the default value can be $(pwd)
 	// it wont be handy to use $(pwd) as default in development time
 	basePath := "./__generated"
-
+	ctx = context.WithValue(ctx, "spinner", s)
 	for _, gt := range generatorTypes {
-		s.Update(string(gt))
 		g := generators.GetGenerator(gt, basePath, d)
 		// will terminate all generations if any of the generators are
 		// throwing an error
-		if err := g.Generate(); err != nil {
+		if err := g.Generate(ctx); err != nil {
 			return err
 		}
 	}

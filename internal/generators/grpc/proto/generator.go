@@ -1,6 +1,7 @@
 package proto
 
 import (
+	"context"
 	"fmt"
 	"os/exec"
 
@@ -42,9 +43,9 @@ func NewGenerator(path string, d *parser.Definition) *Generator {
 }
 
 // Generate generates gRPC prtobuf code for all given modules(services)
-func (g *Generator) Generate() error {
+func (g *Generator) Generate(ctx context.Context) error {
 	for _, m := range g.modules {
-		if err := g.generateProtoForModule(m, tmpl); err != nil {
+		if err := g.generateProtoForModule(ctx, m, tmpl); err != nil {
 			return err
 		}
 		if err := g.generateGRPCService(g.protoFilePathForModule(m)); err != nil {
@@ -60,9 +61,10 @@ func (g *Generator) protoFilePathForModule(m Module) string {
 }
 
 // generateProtoForModule generates proto file for the given module
-func (g *Generator) generateProtoForModule(m Module, tmpl string) error {
+func (g *Generator) generateProtoForModule(ctx context.Context, m Module, tmpl string) error {
 	path := fmt.Sprintf("%s/api", g.Path)
 	return writer.CompileAndWrite(
+		ctx,
 		path,
 		m.Name+".proto",
 		tmpl,
