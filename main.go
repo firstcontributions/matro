@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 
+	"github.com/firstcontributions/matro/internal/ctxkeys"
 	"github.com/firstcontributions/matro/internal/generators"
 	"github.com/firstcontributions/matro/internal/parser"
 	"github.com/firstcontributions/matro/pkg/spinner"
@@ -39,7 +40,7 @@ func generate(d *parser.Definition, generatorTypes []generators.Type) error {
 	// the default value can be $(pwd)
 	// it wont be handy to use $(pwd) as default in development time
 	basePath := "./__generated"
-	ctx = context.WithValue(ctx, "spinner", s)
+	ctx = context.WithValue(ctx, ctxkeys.Spinner, s)
 	for _, gt := range generatorTypes {
 		g := generators.GetGenerator(gt, basePath, d)
 		// will terminate all generations if any of the generators are

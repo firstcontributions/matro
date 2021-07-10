@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/firstcontributions/matro/internal/ctxkeys"
 	"github.com/firstcontributions/matro/pkg/spinner"
 )
 
@@ -63,5 +64,5 @@ func CompileAndWrite(
 	return w.Write(ctx)
 }
 func getSpinner(ctx context.Context) *spinner.Spinner {
-	return ctx.Value("spinner").(*spinner.Spinner)
+	return ctx.Value(ctxkeys.Spinner).(*spinner.Spinner)
 }
