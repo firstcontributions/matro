@@ -28,6 +28,12 @@
     <a href= "https://codeclimate.com/github/firstcontributions/matro/test_coverage"> 
         <img alt="Code Climate coverage" src="https://api.codeclimate.com/v1/badges/99dfc661e165766b7528/test_coverage">
     </a>
+    <a href="https://deepsource.io/gh/firstcontributions/matro/?ref=repository-badge}" target="_blank">
+      <img alt="DeepSource" title="DeepSource" src="https://deepsource.io/gh/firstcontributions/matro.svg/?label=active+issues&show_trend=truetoken=CyxagxqXgW4t86z6c-IDpfy7"/>
+    </a>
+    <a href="https://deepsource.io/gh/firstcontributions/matro/?ref=repository-badge}" target="_blank">
+      <img alt="DeepSource" title="DeepSource" src="https://deepsource.io/gh/firstcontributions/matro.svg/?label=resolved+issues&show_trend=true&token=CyxagxqXgW4t86z6c-IDpfy7"/>
+    </a>
   </p>
   
 </p>
