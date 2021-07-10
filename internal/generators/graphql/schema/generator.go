@@ -1,12 +1,12 @@
 package schema
 
 import (
+	"context"
 	"fmt"
-	"text/template"
 
 	"github.com/firstcontributions/matro/internal/generators/types"
-	"github.com/firstcontributions/matro/internal/generators/utils"
 	"github.com/firstcontributions/matro/internal/parser"
+	"github.com/firstcontributions/matro/internal/writer"
 )
 
 // Generator implements the graphql schema generator
@@ -25,18 +25,13 @@ func NewGenerator(path string, d *parser.Definition) *Generator {
 }
 
 // Generate generates a graphql schema file based on given template
-func (g *Generator) Generate() error {
+func (g *Generator) Generate(ctx context.Context) error {
 	path := fmt.Sprintf("%s/assets", g.Path)
-	t, err := template.New("graphql").
-		Funcs(g.FuncMap()).
-		Parse(schemaTmpl)
-	if err != nil {
-		return err
-	}
-	fw, err := utils.GetFileWriter(path, "schema.graphql")
-	if err != nil {
-		return err
-	}
-	defer fw.Close()
-	return t.Execute(fw, g)
+	return writer.CompileAndWrite(
+		ctx,
+		path,
+		"schema.graphql",
+		schemaTmpl,
+		g,
+	)
 }

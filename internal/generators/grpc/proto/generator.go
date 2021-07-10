@@ -1,13 +1,13 @@
 package proto
 
 import (
+	"context"
 	"fmt"
 	"os/exec"
-	"text/template"
 
 	"github.com/firstcontributions/matro/internal/generators/types"
-	"github.com/firstcontributions/matro/internal/generators/utils"
 	"github.com/firstcontributions/matro/internal/parser"
+	"github.com/firstcontributions/matro/internal/writer"
 )
 
 // Generator implements gRPC protobuf generator
@@ -43,16 +43,9 @@ func NewGenerator(path string, d *parser.Definition) *Generator {
 }
 
 // Generate generates gRPC prtobuf code for all given modules(services)
-func (g *Generator) Generate() error {
-	t, err := template.New("proto").
-		Funcs(g.FuncMap()).
-		Parse(tmpl)
-	if err != nil {
-		return err
-	}
-
+func (g *Generator) Generate(ctx context.Context) error {
 	for _, m := range g.modules {
-		if err := g.generateProtoForModule(m, t); err != nil {
+		if err := g.generateProtoForModule(ctx, m, tmpl); err != nil {
 			return err
 		}
 		if err := g.generateGRPCService(g.protoFilePathForModule(m)); err != nil {
@@ -68,16 +61,15 @@ func (g *Generator) protoFilePathForModule(m Module) string {
 }
 
 // generateProtoForModule generates proto file for the given module
-func (g *Generator) generateProtoForModule(m Module, t *template.Template) error {
+func (g *Generator) generateProtoForModule(ctx context.Context, m Module, tmpl string) error {
 	path := fmt.Sprintf("%s/api", g.Path)
-	fw, err := utils.GetFileWriter(path, m.Name+".proto")
-	if err != nil {
-		return err
-	}
-	if err := t.Execute(fw, m); err != nil {
-		return err
-	}
-	return fw.Close()
+	return writer.CompileAndWrite(
+		ctx,
+		path,
+		m.Name+".proto",
+		tmpl,
+		m,
+	)
 }
 
 // generateGRPCService generates grpc service stub from the proto file

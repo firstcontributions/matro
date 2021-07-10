@@ -1,11 +1,8 @@
 package types
 
 import (
-	"text/template"
-
 	"github.com/firstcontributions/matro/internal/generators/utils"
 	"github.com/firstcontributions/matro/internal/parser"
-	"github.com/gertd/go-pluralize"
 )
 
 // TypeDefs encapsulates the list of types
@@ -50,22 +47,6 @@ func getTypeMap(types []*CompositeType, edges *utils.Set) map[string]*CompositeT
 		}
 	}
 	return typeMap
-}
-
-// FuncMap return a list of funcs that are usefull for code generation
-// wrong place to keep this info,
-// TODO: needs to move this to a better place
-func (g *TypeDefs) FuncMap() template.FuncMap {
-	p := pluralize.NewClient()
-
-	return template.FuncMap{
-		"title":    utils.ToTitleCase,
-		"type":     getGraphQLType,
-		"grpcType": getGRPCType,
-		"add":      func(a, b int) int { return a + b },
-		"counter":  utils.Counter(),
-		"plural":   p.Plural,
-	}
 }
 
 // GetTypeDefs gets list of types by name

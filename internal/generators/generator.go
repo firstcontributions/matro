@@ -1,6 +1,8 @@
 package generators
 
 import (
+	"context"
+
 	"github.com/firstcontributions/matro/internal/generators/graphql/gocode"
 	"github.com/firstcontributions/matro/internal/generators/graphql/schema"
 	"github.com/firstcontributions/matro/internal/generators/grpc/proto"
@@ -9,22 +11,22 @@ import (
 )
 
 // Type defines a generator type
-type Type string
+type Type int
 
 // IGenerator is an interface with a generate function
 type IGenerator interface {
-	Generate() error
+	Generate(ctx context.Context) error
 }
 
 const (
 	// TypeGQLSchema defines the type for graphql schema generator
-	TypeGQLSchema Type = "graphql-schema"
+	TypeGQLSchema Type = iota
 	// TypeGQLServer defines the type for graphql server code generator
-	TypeGQLServer Type = "graphql-server"
+	TypeGQLServer
 	// TypeGRPCProto defines the type for gRPC protocol buffer generator
-	TypeGRPCProto Type = "grpc-proto"
+	TypeGRPCProto
 	// TypeMongoModel defines the type for mongo model code generator
-	TypeMongoModel Type = "mongo-model"
+	TypeMongoModel
 )
 
 // GetGenerator is a factory method to get generator by given type

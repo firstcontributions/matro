@@ -1,14 +1,13 @@
 package gocode
 
 import (
-	"bytes"
+	"context"
 	"fmt"
-	"text/template"
 
 	"github.com/firstcontributions/matro/internal/parser"
+	"github.com/firstcontributions/matro/internal/writer"
 
 	"github.com/firstcontributions/matro/internal/generators/types"
-	"github.com/firstcontributions/matro/internal/generators/utils"
 )
 
 // Generator implements graphql server code generator
@@ -28,10 +27,10 @@ func NewGenerator(path string, d *parser.Definition) *Generator {
 
 // Generate generates all graphql server codes
 // (type definitons, query resolvers, mutation executions, ...)
-func (g *Generator) Generate() error {
+func (g *Generator) Generate(ctx context.Context) error {
 	path := fmt.Sprintf("%s/internal/graphql/schema", g.Path)
 	for _, t := range g.Types {
-		if err := g.generateTypes(typesTpl, t, path, t.Name+".go"); err != nil {
+		if err := g.generateTypes(ctx, typesTpl, t, path, t.Name+".go"); err != nil {
 			return err
 		}
 	}
@@ -39,17 +38,12 @@ func (g *Generator) Generate() error {
 }
 
 // generateTypes generate types based on the given template
-func (g *Generator) generateTypes(tmpl string, data interface{}, path, filename string) error {
-	var b bytes.Buffer
-
-	t, err := template.New("go").
-		Funcs(g.FuncMap()).
-		Parse(tmpl)
-	if err != nil {
-		return err
-	}
-	if err := t.Execute(&b, data); err != nil {
-		return err
-	}
-	return utils.FormatAndWriteGoCode(path, filename, b.Bytes())
+func (g *Generator) generateTypes(ctx context.Context, tmpl string, data interface{}, path, filename string) error {
+	return writer.CompileAndWrite(
+		ctx,
+		path,
+		filename,
+		tmpl,
+		data,
+	)
 }

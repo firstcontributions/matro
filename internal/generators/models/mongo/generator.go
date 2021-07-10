@@ -1,13 +1,12 @@
 package mongo
 
 import (
-	"bytes"
+	"context"
 	"fmt"
-	"text/template"
 
 	"github.com/firstcontributions/matro/internal/generators/types"
-	"github.com/firstcontributions/matro/internal/generators/utils"
 	"github.com/firstcontributions/matro/internal/parser"
+	"github.com/firstcontributions/matro/internal/writer"
 )
 
 // Generator implements mongo model code generator
@@ -45,16 +44,16 @@ func NewGenerator(path string, d *parser.Definition) *Generator {
 
 // Generate generates a store interface, mongo implementation for the interface,
 // data schema, crud operations for all the types in all given modules
-func (g *Generator) Generate() error {
+func (g *Generator) Generate(ctx context.Context) error {
 	for _, m := range g.modules {
-		if err := g.generateStore(m); err != nil {
+		if err := g.generateStore(ctx, m); err != nil {
 			return err
 		}
 		for _, t := range m.Types {
-			if err := g.generateModel(m.Name, t); err != nil {
+			if err := g.generateModel(ctx, m.Name, t); err != nil {
 				return err
 			}
-			if err := g.generateModelTypes(m.Name, t); err != nil {
+			if err := g.generateModelTypes(ctx, m.Name, t); err != nil {
 				return err
 			}
 		}
@@ -64,21 +63,13 @@ func (g *Generator) Generate() error {
 
 // generateStore generates a mongo implementation for the store interface,
 // constants associated, connection pool manager etc
-func (g *Generator) generateStore(m Module) error {
-	t, err := template.New("mongo_store").
-		Funcs(g.FuncMap()).
-		Parse(storeTpl)
-	if err != nil {
-		return err
-	}
-	var b bytes.Buffer
-	if err := t.Execute(&b, m); err != nil {
-		return err
-	}
-	return utils.FormatAndWriteGoCode(
+func (g *Generator) generateStore(ctx context.Context, m Module) error {
+	return writer.CompileAndWrite(
+		ctx,
 		fmt.Sprintf("%s/internal/models/%sstore/mongo", g.Path, m.Name),
 		"store.go",
-		b.Bytes(),
+		storeTpl,
+		m,
 	)
 }
 
@@ -86,16 +77,13 @@ func (g *Generator) generateStore(m Module) error {
 // supported operations:
 // Create, GetAll(search, filter, pagination),
 // GetByID, Update, Delete
-func (g *Generator) generateModel(module string, typ *types.CompositeType) error {
-	t, err := template.New("mongo_model").
-		Funcs(g.FuncMap()).
-		Parse(modelTpl)
-	if err != nil {
-		return err
-	}
-	var b bytes.Buffer
-	if err := t.Execute(
-		&b,
+func (g *Generator) generateModel(ctx context.Context, module string, typ *types.CompositeType) error {
+
+	return writer.CompileAndWrite(
+		ctx,
+		fmt.Sprintf("%s/internal/models/%sstore/mongo", g.Path, module),
+		typ.Name+".go",
+		modelTpl,
 		struct {
 			Module string
 			*types.CompositeType
@@ -105,27 +93,17 @@ func (g *Generator) generateModel(module string, typ *types.CompositeType) error
 			CompositeType: typ,
 			Repo:          g.Repo,
 		},
-	); err != nil {
-		return err
-	}
-	return utils.FormatAndWriteGoCode(
-		fmt.Sprintf("%s/internal/models/%sstore/mongo", g.Path, module),
-		typ.Name+".go",
-		b.Bytes(),
 	)
+
 }
 
 // generateModelTypes generates data schema for the given types
-func (g *Generator) generateModelTypes(module string, typ *types.CompositeType) error {
-	t, err := template.New("mongo_model_type").
-		Funcs(g.FuncMap()).
-		Parse(modelTyp)
-	if err != nil {
-		return err
-	}
-	var b bytes.Buffer
-	if err := t.Execute(
-		&b,
+func (g *Generator) generateModelTypes(ctx context.Context, module string, typ *types.CompositeType) error {
+	return writer.CompileAndWrite(
+		ctx,
+		fmt.Sprintf("%s/internal/models/%sstore", g.Path, module),
+		typ.Name+".go",
+		modelTyp,
 		struct {
 			Module string
 			*types.CompositeType
@@ -133,12 +111,5 @@ func (g *Generator) generateModelTypes(module string, typ *types.CompositeType) 
 			Module:        module,
 			CompositeType: typ,
 		},
-	); err != nil {
-		return err
-	}
-	return utils.FormatAndWriteGoCode(
-		fmt.Sprintf("%s/internal/models/%sstore", g.Path, module),
-		typ.Name+".go",
-		b.Bytes(),
 	)
 }
