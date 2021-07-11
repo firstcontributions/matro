@@ -19,5 +19,8 @@ func FuncMap() template.FuncMap {
 		"add":      func(a, b int) int { return a + b },
 		"counter":  utils.Counter(),
 		"plural":   p.Plural,
+		"empty": func(a []string) bool {
+			return len(a) == 0
+		},
 	}
 }
