@@ -83,7 +83,7 @@ func (g *Generator) generateModel(ctx context.Context, module string, typ *types
 		ctx,
 		fmt.Sprintf("%s/internal/models/%sstore/mongo", g.Path, module),
 		typ.Name+".go",
-		modelTpl,
+		crudTpl,
 		struct {
 			Module string
 			*types.CompositeType
