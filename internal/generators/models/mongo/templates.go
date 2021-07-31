@@ -50,13 +50,16 @@ import (
 	"context"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/bson"
+	"github.com/gokultp/go-mongoqb"
 	"{{- .Repo -}}/internal/models/{{- .Module -}}store"
 
 
 )
 
 func (s *{{- title .Module -}}Store) Create{{- title .Name -}} (ctx context.Context, {{.Name}} *{{-  .Module -}}store. {{- title .Name}}) (* {{ .Module -}}store. {{- title .Name}}, error) {
-	
+	now := time.Now()
+	{{.Name -}}.TimeCreated = &now
+	{{.Name -}}.TimeUpdated = &now
 	if _, err := s.getCollection(Collection{{title (plural .Name)}}).InsertOne(ctx, {{.Name}}); err != nil {
 		return nil, err
 	}
@@ -64,11 +67,10 @@ func (s *{{- title .Module -}}Store) Create{{- title .Name -}} (ctx context.Cont
 }
 
 func (s *{{- title .Module -}}Store) Get{{- title .Name -}}ByID (ctx context.Context, id string) (* {{ .Module -}}store. {{- title .Name}}, error) {
-	query := bson.M{
-		"_id": id,
-	}
+	qb := mongoqb.NewQueryBuilder().
+			Eq("_id", id)
 	var {{.Name}} {{ .Module -}}store. {{- title .Name}}
-	if err := s.getCollection(Collection{{title (plural .Name)}}).FindOne(ctx, query).Decode(&{{- .Name -}}); err != nil {
+	if err := s.getCollection(Collection{{title (plural .Name)}}).FindOne(ctx, qb.Build()).Decode(&{{- .Name -}}); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, nil
 		}
@@ -89,11 +91,13 @@ func (s *{{- title .Module -}}Store) Get{{- title (plural .Name) -}} (
 	[]*{{ .Module -}}store. {{- title .Name}}, 
 	error,
 ) {
-	query := bson.M{}
-	{{- template "searchQuery" .}}
+	qb := mongoqb.NewQueryBuilder()
+	{{- range .Filters }}
+	qb.Eq("{{- . -}}", {{.}})
+	{{- end }}
 
 	var {{plural .Name}} []*{{ .Module -}}store. {{- title .Name}}
-	if err := s.getCollection(Collection{{title (plural .Name)}}).Find(ctx, query).Decode(&{{- plural .Name -}}); err != nil {
+	if err := s.getCollection(Collection{{title (plural .Name)}}).Find(ctx, qb.Build()).Decode(&{{- plural .Name -}}); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, nil
 		}
@@ -101,27 +105,31 @@ func (s *{{- title .Module -}}Store) Get{{- title (plural .Name) -}} (
 	}
 	return &{{- plural .Name}}, nil
 }
+{{- if .Mutatable}}
+func (s *{{- title .Module -}}Store) Update{{- title .Name -}} (ctx context.Context, {{.Name -}}Update *{{-  .Module -}}store. {{- title .Name -}}Update) (error) {
+	qb := mongoqb.NewQueryBuilder().
+			Eq("_id", id)
 
-func (s *{{- title .Module -}}Store) Update{{- title .Name -}} (ctx context.Context, {{.Name}} *{{-  .Module -}}store. {{- title .Name}}) (* {{ .Module -}}store. {{- title .Name}}, error) {
-	query := bson.M{
-		"_id": {{.Name -}}.Id,
+	now := time.Now()
+	{{.Name -}}Update.TimeUpdated = &now
+
+	u := mongoqb.NewUpdateMap().
+	SetFields({{- .Name -}}Update)
+
+	um, err := u.Build()
+	if err != nil {
+		return err
 	}
-	if _, err := s.getCollection(Collection{{title (plural .Name)}}).UpdateOne(ctx, query, {{.Name}}); err != nil {
-		if errors.Is(err, mongo.ErrNoDocuments) {
-			return nil, nil
-		}
-		return nil, err
+	if _, err := s.getCollection(Collection{{title (plural .Name)}}).UpdateOne(ctx, qb.Build(), um); err != nil {
+		return err
 	}
-	return {{ .Name}}, nil
+	return nil
 }
+{{- end}}
 func (s *{{- title .Module -}}Store) Delete{{- title .Name -}}ByID (ctx context.Context, id string) (error) {
-	query := bson.M{
-		"_id": id,
-	}
-	if _,  err := s.getCollection(Collection{{title (plural .Name)}}).DeleteOne(ctx, query); err != nil {
-		if errors.Is(err, mongo.ErrNoDocuments) {
-			return nil, nil
-		}
+	qb := mongoqb.NewQueryBuilder().
+			Eq("_id", id)
+	if _,  err := s.getCollection(Collection{{title (plural .Name)}}).DeleteOne(ctx, qb.Build()); err != nil {
 		return  err
 	}
 	return nil
@@ -131,18 +139,6 @@ func (s *{{- title .Module -}}Store) Delete{{- title .Name -}}ByID (ctx context.
 {{- $t := .}}
 {{- range .Filters}}
 	{{.}} *{{$t.FieldType .}},
-{{- end}}
-{{- end}}
-
-{{- define "searchQuery" }}
-{{- if not (empty .SearchFields)}}
-	searchQuery := map[string][]interface{}{
-		"$or": []interface{
-			{{- range .SearchFields }}
-			map[string]interface{}{"{{- . -}}": search},
-			{{- end}}
-		}
-	}
 {{- end}}
 {{- end}}
 `
@@ -157,4 +153,16 @@ type {{title .Name}} struct {
 	{{ .GoName}}  {{- .GoType}}` + "`bson:\"{{- .Name}}\"`" + `  
 	{{- end}}
 	{{- end}}
-}`
+}
+
+{{- if .Mutatable}}
+type {{title .Name -}}Update struct {
+	{{- counter 0}} 
+	{{- range .Fields}}
+	{{- if  .IsMutatable }}
+	{{ .GoName}}  {{- .GoType}}` + "`bson:\"{{- .Name}}\"`" + `  
+	{{- end}}
+	{{- end}}
+}
+{{- end}}
+`

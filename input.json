@@ -21,6 +21,7 @@
             "meta": {
                 "search_fields": ["firstname", "lastname", "github_handle"],
                 "filters": ["github_handle"],
+                "mutatable_fileds" :["firstname", "lastname", "github_handle"],
                 "graphql_ops": "CRUD"
             },
             "properties":{
@@ -39,8 +40,7 @@
             "type": "object",
             "properties":{
                 "id": "id",
-                "display_name": "string",
-                "date_added" : "time"
+                "display_name": "string"
             }
         },
         "story": {
@@ -48,7 +48,8 @@
             "type": "object",
             "meta": {
                 "graphql_ops": ["CRUD"],
-                "filters": ["created_by"]
+                "filters": ["created_by"],
+                "mutatable_fileds" :["title", "content", "abstract"]
             },
             "properties": {
                 "id": "id",
@@ -57,7 +58,6 @@
                 "abstract": "string",
                 "claps": "int",
                 "is_clappend": "bool",
-                "created_at": "time",
                 "comments": {
                     "type": "list",
                     "paginated": true,
@@ -81,7 +81,6 @@
                 "id": "id",
                 "content": "string",
                 "abstract": "string",
-                "created_at": "time",
                 "commented_by": {
                     "type": "object",
                     "schema": "user",

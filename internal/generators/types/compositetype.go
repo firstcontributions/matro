@@ -11,14 +11,15 @@ import (
 // CompositeType defines a non trivial type with a set
 // of informations like what all fields, opeations supported, etc.
 type CompositeType struct {
-	Name          string
-	Fields        map[string]*Field
-	ReferedFields []string
-	IsNode        bool
-	IsEdge        bool
-	Filters       []string
-	GraphqlOps    *parser.Ops
-	SearchFields  []string
+	Name            string
+	Fields          map[string]*Field
+	ReferedFields   []string
+	IsNode          bool
+	IsEdge          bool
+	Filters         []string
+	GraphqlOps      *parser.Ops
+	SearchFields    []string
+	MutatableFields []string
 }
 
 // Field defines the field meta data by its type, is it a list,
@@ -33,6 +34,7 @@ type Field struct {
 	Args         []Field
 	IsPrimitive  bool
 	IsJoinedData bool
+	IsMutatable  bool
 }
 
 // paginationArgs are the defualt pagination arguments should be
@@ -122,6 +124,18 @@ func (f *Field) GraphQLFortmattedType() string {
 	return t
 }
 
+var auditFields = []*Field{
+	{
+		Name: "time_created",
+		Type: "time",
+	},
+	{
+		Name:        "time_updated",
+		Type:        "time",
+		IsMutatable: true,
+	},
+}
+
 // NewCompositeType return an instance of the CompositeType
 func NewCompositeType(d *parser.Definition, typeDef *parser.Type) *CompositeType {
 	fields := map[string]*Field{}
@@ -132,14 +146,26 @@ func NewCompositeType(d *parser.Definition, typeDef *parser.Type) *CompositeType
 		}
 		fields[field] = NewField(d, def, field)
 	}
-	return &CompositeType{
-		Name:         typeDef.Name,
-		Fields:       fields,
-		IsNode:       isNode,
-		GraphqlOps:   typeDef.Meta.GraphqlOps,
-		SearchFields: typeDef.Meta.SearchFields,
-		Filters:      typeDef.Meta.Filters,
+	for _, f := range auditFields {
+		fields[f.Name] = f
 	}
+	for _, mf := range typeDef.Meta.MutatableFields {
+		fields[mf].IsMutatable = true
+	}
+	return &CompositeType{
+		Name:            typeDef.Name,
+		Fields:          fields,
+		IsNode:          isNode,
+		GraphqlOps:      typeDef.Meta.GraphqlOps,
+		SearchFields:    typeDef.Meta.SearchFields,
+		Filters:         typeDef.Meta.Filters,
+		MutatableFields: typeDef.Meta.MutatableFields,
+	}
+}
+
+// Mutatable will say this type is mutatable for not
+func (c *CompositeType) Mutatable() bool {
+	return len(c.MutatableFields) > 0
 }
 
 // EdgeFields return the paginated fields that can be an edge
