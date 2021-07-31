@@ -3,6 +3,7 @@ package generators
 import (
 	"context"
 
+	"github.com/firstcontributions/matro/internal/generators/gomod"
 	"github.com/firstcontributions/matro/internal/generators/graphql/gocode"
 	"github.com/firstcontributions/matro/internal/generators/graphql/schema"
 	"github.com/firstcontributions/matro/internal/generators/grpc/proto"
@@ -27,6 +28,8 @@ const (
 	TypeGRPCProto
 	// TypeMongoModel defines the type for mongo model code generator
 	TypeMongoModel
+	// TypeGoMod inits go.mod and get all dependencies
+	TypeGoMod
 )
 
 // GetGenerator is a factory method to get generator by given type
@@ -40,6 +43,8 @@ func GetGenerator(t Type, path string, d *parser.Definition) IGenerator {
 		return proto.NewGenerator(path, d)
 	case TypeMongoModel:
 		return mongo.NewGenerator(path, d)
+	case TypeGoMod:
+		return gomod.NewGenerator(path, d)
 	}
 
 	return nil
