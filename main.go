@@ -19,6 +19,7 @@ func main() {
 		generators.TypeGQLServer,
 		generators.TypeGRPCProto,
 		generators.TypeMongoModel,
+		generators.TypeGoMod,
 	}
 
 	if err := generate(d, generatorTypes); err != nil {
