@@ -58,9 +58,10 @@ func CompileAndWrite(
 	if err := w.Compile(ctx, tmpl, data); err != nil {
 		return err
 	}
-	// if err := w.Format(ctx); err != nil {
-	// 	return err
-	// }
+	if err := w.Format(ctx); err != nil {
+		fmt.Println(err)
+		return err
+	}
 	return w.Write(ctx)
 }
 func getSpinner(ctx context.Context) *spinner.Spinner {

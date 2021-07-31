@@ -32,9 +32,10 @@ var (
 
 // Meta defines the data schema meta data properties
 type Meta struct {
-	SearchFields []string `json:"search_fields"`
-	Filters      []string `json:"filters"`
-	GraphqlOps   *Ops     `json:"graphql_ops"`
+	SearchFields    []string `json:"search_fields"`
+	Filters         []string `json:"filters"`
+	GraphqlOps      *Ops     `json:"graphql_ops"`
+	MutatableFields []string `json:"mutatable_fileds"`
 }
 
 // Ops defines the supported graphql CRUD operations
