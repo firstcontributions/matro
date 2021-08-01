@@ -166,3 +166,47 @@ type {{title .Name -}}Update struct {
 }
 {{- end}}
 `
+
+var storeInterfaceTpl = `
+package {{ .Name -}}store
+
+import (
+	"{{- .Repo -}}/internal/models/{{- .Name -}}store/mongo"
+)
+
+type Store interface {
+	{{- range .Types}}
+
+	// {{ .Name }} methods
+	Create{{- title .Name -}} (context.Context,  *{{- title .Name}}) (*{{- title .Name}}, error)
+	Get{{- title .Name -}}ByID (context.Context, string) (*{{- title .Name}}, error)
+	Get{{- title (plural .Name) -}} (context.Context,
+		{{- if not (empty .SearchFields) -}}
+		*string,
+		{{- end -}}
+		{{- template "getargs" . -}}
+		*string,*int) ([]* {{- title .Name}}, error) 
+
+	{{- if .Mutatable}}
+	Update{{- title .Name -}} (context.Context, *{{- title .Name -}}Update) (error) 
+	{{- end}}
+	Delete{{- title .Name -}}ByID (context.Context, string) (error)
+	{{- end}}
+}
+
+
+func GetStore(ctx context.Context, storeType, url string) (Store, error){
+	switch storeType {
+	case "mongo":
+		return mongo.New{{- title .Name -}}Store(ctx, url)
+	}
+	return mongo.New{{- title .Name -}}Store(ctx, url)
+}
+
+{{- define "getargs" -}}
+{{- $t := . -}}
+{{- range .Filters -}}
+	*{{$t.FieldType . -}},
+{{- end -}}
+{{- end -}}
+`

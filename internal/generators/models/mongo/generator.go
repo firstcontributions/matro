@@ -19,6 +19,7 @@ type Generator struct {
 
 // Module encapsulates module metadata and types associated
 type Module struct {
+	Repo string
 	parser.Module
 	Types []*types.CompositeType
 }
@@ -31,6 +32,7 @@ func NewGenerator(path string, d *parser.Definition) *Generator {
 		mods[m.Name] = Module{
 			Module: m,
 			Types:  td.GetTypeDefs(m.Entities),
+			Repo:   d.Repo,
 		}
 
 	}
@@ -46,6 +48,9 @@ func NewGenerator(path string, d *parser.Definition) *Generator {
 // data schema, crud operations for all the types in all given modules
 func (g *Generator) Generate(ctx context.Context) error {
 	for _, m := range g.modules {
+		if err := g.generateMongoStore(ctx, m); err != nil {
+			return err
+		}
 		if err := g.generateStore(ctx, m); err != nil {
 			return err
 		}
@@ -61,9 +66,20 @@ func (g *Generator) Generate(ctx context.Context) error {
 	return nil
 }
 
-// generateStore generates a mongo implementation for the store interface,
-// constants associated, connection pool manager etc
+// generateStore generates  the store interface,
 func (g *Generator) generateStore(ctx context.Context, m Module) error {
+	return writer.CompileAndWrite(
+		ctx,
+		fmt.Sprintf("%s/internal/models/%sstore", g.Path, m.Name),
+		"store.go",
+		storeInterfaceTpl,
+		m,
+	)
+}
+
+// generateMongoStore generates a mongo implementation for the store interface,
+// constants associated, connection pool manager etc
+func (g *Generator) generateMongoStore(ctx context.Context, m Module) error {
 	return writer.CompileAndWrite(
 		ctx,
 		fmt.Sprintf("%s/internal/models/%sstore/mongo", g.Path, m.Name),
