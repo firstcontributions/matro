@@ -9,7 +9,8 @@ import (
 // it keeps the information in the form of a map
 // of type name to Type struct
 type TypeDefs struct {
-	Types map[string]*CompositeType
+	Types   map[string]*CompositeType
+	Queries []Query
 }
 
 // NewTypeDefs get all typedefs from the parsed json schema
@@ -21,8 +22,13 @@ func NewTypeDefs(path string, d *parser.Definition) *TypeDefs {
 		edges.Union(t.EdgeFields())
 		types = append(types, t)
 	}
+	queries := getQueries(d)
+	for _, q := range queries {
+		edges.Add(q.Type)
+	}
 	return &TypeDefs{
-		Types: getTypeMap(types, edges),
+		Types:   getTypeMap(types, edges),
+		Queries: queries,
 	}
 }
 

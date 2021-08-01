@@ -14,6 +14,17 @@
             "entities": ["story", "comment"]
         }
     ],
+    "high_level_queries": [
+        {
+            "name": "feeds",
+            "type" :"list",
+            "paginated": true,
+            "schema" : "story",
+            "meta" : {
+                "filters": ["created_by"]
+            }
+        }
+    ],
     "data_schema":{
         "user":{
             "name": "user",

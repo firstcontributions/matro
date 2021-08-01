@@ -1,6 +1,23 @@
 package schema
 
 const schemaTmpl = `
+schema {
+	query Query
+}
+type Query {
+	viewer: User
+  
+	# Fetches an object given its ID
+	node(
+	  # The ID of an object
+	  id: ID!
+	): Node
+
+	{{- range .Queries }}
+
+	{{.GraphQLFormattedName}}: {{.GraphQLFortmattedType}}
+	{{- end}}
+}
 
 interface Node {
 	id: ID!
@@ -60,4 +77,6 @@ type {{.ConnectionName}} {
 	pageInfo: PageInfo!
 }
 {{- end}}
+
+
 `

@@ -6,6 +6,7 @@ import (
 
 	"github.com/firstcontributions/matro/internal/generators/utils"
 	"github.com/firstcontributions/matro/internal/parser"
+	"github.com/gertd/go-pluralize"
 )
 
 // CompositeType defines a non trivial type with a set
@@ -61,12 +62,40 @@ func NewField(d *parser.Definition, typeDef *parser.Type, name string) *Field {
 		IsList:       typeDef.Type == parser.List,
 		IsPaginated:  typeDef.Paginated,
 		IsJoinedData: typeDef.JoinedData,
+		Args:         getArgs(d, typeDef),
 	}
 	if f.IsPaginated {
 		f.Args = append(f.Args, paginationArgs...)
 		f.IsQuery = true
 	}
 	return f
+}
+
+// getArgs gets argumets for query
+func getArgs(d *parser.Definition, typeDef *parser.Type) []Field {
+	args := []Field{}
+	for _, a := range typeDef.Meta.Filters {
+
+		for pName, pType := range d.DataSchema[typeDef.Schema].Properties {
+			if pName == a {
+				if pType.IsPrimitive() {
+					args = append(args, Field{
+						Name:        a,
+						Type:        pType.Type,
+						IsPrimitive: true,
+					})
+				} else {
+					args = append(args, Field{
+						Name:        a,
+						Type:        parser.String,
+						IsPrimitive: true,
+					})
+				}
+				break
+			}
+		}
+	}
+	return args
 }
 
 // GoName return the field name to be used in go code
@@ -113,7 +142,8 @@ func (f *Field) GraphQLFormattedName() string {
 func (f *Field) GraphQLFortmattedType() string {
 	t := GetGraphQLType(f.Type)
 	if f.IsPaginated {
-		t = fmt.Sprintf("%ssConnection", utils.ToTitleCase(f.Type))
+		plType := pluralize.NewClient().Plural(f.Type)
+		t = fmt.Sprintf("%sConnection", utils.ToTitleCase(plType))
 	}
 	if f.IsList {
 		t = fmt.Sprintf("[%s]", t)
@@ -186,7 +216,8 @@ func (c *CompositeType) EdgeName() string {
 
 // ConnectionName returns the connection type name
 func (c *CompositeType) ConnectionName() string {
-	return fmt.Sprintf("%ssConnection", utils.ToTitleCase(c.Name))
+	pl := pluralize.NewClient().Plural(c.Name)
+	return fmt.Sprintf("%sConnection", utils.ToTitleCase(pl))
 }
 
 // FieldType return the type of the given field
