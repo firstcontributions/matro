@@ -21,6 +21,7 @@ type CompositeType struct {
 	GraphqlOps      *parser.Ops
 	SearchFields    []string
 	MutatableFields []string
+	Module          string
 }
 
 // Field defines the field meta data by its type, is it a list,
@@ -99,11 +100,12 @@ func getArgs(d *parser.Definition, typeDef *parser.Type) []Field {
 }
 
 // GoName return the field name to be used in go code
-func (f *Field) GoName() string {
+func (f *Field) GoName(allExported ...bool) string {
+	exported := len(allExported) > 0 && allExported[0]
 	if f.Name == "id" {
 		return "Id"
 	}
-	if f.IsJoinedData {
+	if !exported && f.IsJoinedData {
 		return f.Name
 	}
 	return utils.ToTitleCase(f.Name)

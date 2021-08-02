@@ -27,13 +27,13 @@ func NewTypeDefs(path string, d *parser.Definition) *TypeDefs {
 		edges.Add(q.Type)
 	}
 	return &TypeDefs{
-		Types:   getTypeMap(types, edges),
+		Types:   getTypeMap(d, types, edges),
 		Queries: queries,
 	}
 }
 
 // getTypeMap generated the <typeName><Type> map
-func getTypeMap(types []*CompositeType, edges *utils.Set) map[string]*CompositeType {
+func getTypeMap(d *parser.Definition, types []*CompositeType, edges *utils.Set) map[string]*CompositeType {
 	typeMap := map[string]*CompositeType{}
 	for _, t := range types {
 		if edges.IsElem(t.Name) {
@@ -49,6 +49,13 @@ func getTypeMap(types []*CompositeType, edges *utils.Set) map[string]*CompositeT
 					t.Name,
 				)
 
+			}
+		}
+	}
+	for _, m := range d.Modules {
+		for _, t := range m.Entities {
+			if _, ok := typeMap[t]; ok {
+				typeMap[t].Module = m.Name
 			}
 		}
 	}

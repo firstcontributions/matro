@@ -97,16 +97,18 @@ func (s *{{- title .Module -}}Store) Get{{- title (plural .Name) -}} (
 	{{- end }}
 
 	var {{plural .Name}} []*{{ .Module -}}store. {{- title .Name}}
-	if err := s.getCollection(Collection{{title (plural .Name)}}).Find(ctx, qb.Build()).Decode(&{{- plural .Name -}}); err != nil {
-		if errors.Is(err, mongo.ErrNoDocuments) {
-			return nil, nil
-		}
+	cursor, err := s.getCollection(Collection{{title (plural .Name)}}).Find(ctx, qb.Build())
+	if  err != nil {
 		return nil, err
 	}
-	return &{{- plural .Name}}, nil
+	err = cursor.All(ctx, &{{- plural .Name}})
+	if err != nil {
+		return nil, err
+	}
+	return {{ plural .Name}}, nil
 }
 {{- if .Mutatable}}
-func (s *{{- title .Module -}}Store) Update{{- title .Name -}} (ctx context.Context, {{.Name -}}Update *{{-  .Module -}}store. {{- title .Name -}}Update) (error) {
+func (s *{{- title .Module -}}Store) Update{{- title .Name -}} (ctx context.Context, id string, {{.Name -}}Update *{{-  .Module -}}store. {{- title .Name -}}Update) (error) {
 	qb := mongoqb.NewQueryBuilder().
 			Eq("_id", id)
 
@@ -116,7 +118,7 @@ func (s *{{- title .Module -}}Store) Update{{- title .Name -}} (ctx context.Cont
 	u := mongoqb.NewUpdateMap().
 	SetFields({{- .Name -}}Update)
 
-	um, err := u.Build()
+	um, err := u.BuildUpdate()
 	if err != nil {
 		return err
 	}
@@ -150,7 +152,7 @@ type {{title .Name}} struct {
 	{{- counter 0}} 
 	{{- range .Fields}}
 	{{- if  (not (and .IsJoinedData  .IsList))}}
-	{{ .GoName}}  {{- .GoType}}` + "`bson:\"{{- .Name}}\"`" + `  
+	{{ .GoName true}}  {{- .GoType }}` + "`bson:\"{{- .Name}}\"`" + `  
 	{{- end}}
 	{{- end}}
 }
@@ -160,7 +162,7 @@ type {{title .Name -}}Update struct {
 	{{- counter 0}} 
 	{{- range .Fields}}
 	{{- if  .IsMutatable }}
-	{{ .GoName}}  {{- .GoType}}` + "`bson:\"{{- .Name}}\"`" + `  
+	{{ .GoName true}}  {{- .GoType }}` + "`bson:\"{{- .Name}}\"`" + `  
 	{{- end}}
 	{{- end}}
 }
@@ -170,9 +172,7 @@ type {{title .Name -}}Update struct {
 var storeInterfaceTpl = `
 package {{ .Name -}}store
 
-import (
-	"{{- .Repo -}}/internal/models/{{- .Name -}}store/mongo"
-)
+
 
 type Store interface {
 	{{- range .Types}}
@@ -194,14 +194,6 @@ type Store interface {
 	{{- end}}
 }
 
-
-func GetStore(ctx context.Context, storeType, url string) (Store, error){
-	switch storeType {
-	case "mongo":
-		return mongo.New{{- title .Name -}}Store(ctx, url)
-	}
-	return mongo.New{{- title .Name -}}Store(ctx, url)
-}
 
 {{- define "getargs" -}}
 {{- $t := . -}}

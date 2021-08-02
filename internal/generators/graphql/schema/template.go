@@ -2,8 +2,9 @@ package schema
 
 const schemaTmpl = `
 schema {
-	query Query
+	query: Query
 }
+
 type Query {
 	viewer: User
   

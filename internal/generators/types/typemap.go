@@ -20,7 +20,7 @@ var graphQLSchemaTypeMap = map[string]string{
 // graphql go implementation types
 
 var goGraphQLTypeMap = map[string]string{
-	parser.ID:     "graphql.ID",
+	parser.ID:     "string",
 	parser.String: "string",
 	parser.Time:   "graphql.Time",
 	parser.Int:    "int32",
