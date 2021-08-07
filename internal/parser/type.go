@@ -35,7 +35,7 @@ type Meta struct {
 	SearchFields    []string `json:"search_fields"`
 	Filters         []string `json:"filters"`
 	GraphqlOps      *Ops     `json:"graphql_ops"`
-	MutatableFields []string `json:"mutatable_fileds"`
+	MutatableFields []string `json:"mutatable_fields"`
 }
 
 // Ops defines the supported graphql CRUD operations

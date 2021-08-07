@@ -48,7 +48,6 @@ func getTypeMap(d *parser.Definition, types []*CompositeType, edges *utils.Set) 
 					typeMap[f.Type].ReferedFields,
 					t.Name,
 				)
-
 			}
 		}
 	}

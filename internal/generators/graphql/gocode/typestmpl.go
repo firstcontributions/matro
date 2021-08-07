@@ -15,10 +15,11 @@ import (
 {{- template "constructor" .}}
 
 {{- if .IsNode }}
-func (n *{{ title .Name}}) ID(ctx context.Context) *graphql.ID {
-	return NewIDMarshaller("{{.Name}}", *n.Id).
-	ToGraphqlID()
-}
+{{- template "nodeIDResolver" .}}
+{{- end}}
+
+{{- if .IsEdge}}
+{{- template "edgeStruct" .}}
 {{- end}}
 
 {{- define "typeDef" }}
@@ -45,6 +46,25 @@ func New {{- title .Name}} (m *{{.Module -}}store.{{-  title .Name}}) *{{- title
 		{{- end}}
 		{{- end}}
 	}
+}
+{{- end}}
+
+{{- define "nodeIDResolver" }}
+func (n *{{ title .Name}}) ID(ctx context.Context) *graphql.ID {
+	return NewIDMarshaller("{{.Name}}", *n.Id).
+	ToGraphqlID()
+}
+{{- end}}
+
+{{- define "edgeStruct" }}
+type {{.ConnectionName}} struct {
+	Edges []* {{- .EdgeName}}
+	PageInfo *PageInfo
+}
+
+type {{.EdgeName}} struct {
+	Node *{{- title .Name}}
+	Cursor string
 }
 {{- end}}
 

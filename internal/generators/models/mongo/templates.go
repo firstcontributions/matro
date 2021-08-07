@@ -81,23 +81,50 @@ func (s *{{- title .Module -}}Store) Get{{- title .Name -}}ByID (ctx context.Con
 
 func (s *{{- title .Module -}}Store) Get{{- title (plural .Name) -}} (
 	ctx context.Context,
+	ids []string,
 	{{- if not (empty .SearchFields)}}
 	search *string,
 	{{- end}}
 	{{- template "getargs" . }}
-	offset *string,
-	limit *int, 
+	after *string,
+	before *string,
+	limit *int64, 
 ) (
 	[]*{{ .Module -}}store. {{- title .Name}}, 
 	error,
 ) {
 	qb := mongoqb.NewQueryBuilder()
+	if len(ids) > 0 {
+		qb.In("_id", ids)
+	}
 	{{- range .Filters }}
-	qb.Eq("{{- . -}}", {{.}})
+	if {{.}} != nil {
+		qb.Eq("{{- . -}}", {{.}})
+	}
 	{{- end }}
 
+	{{- range .ReferedFields }}
+		if {{. -}}ID != nil {
+			qb.Eq("{{- . -}}_id", {{. -}}ID)
+		}
+	{{- end }}
+	{{- if not (empty .SearchFields)}}
+	if search != nil {
+		qb.Search(search)
+	}
+	{{- end}}
+	if after != nil {
+		qb.Gt("_id", after)
+	}
+	if before != nil {
+		qb.Lt("_id", before)
+	}
+	options := &options.FindOptions{
+		Limit: limit,
+	}
+
 	var {{plural .Name}} []*{{ .Module -}}store. {{- title .Name}}
-	cursor, err := s.getCollection(Collection{{title (plural .Name)}}).Find(ctx, qb.Build())
+	cursor, err := s.getCollection(Collection{{title (plural .Name)}}).Find(ctx, qb.Build(), options)
 	if  err != nil {
 		return nil, err
 	}
@@ -142,6 +169,9 @@ func (s *{{- title .Module -}}Store) Delete{{- title .Name -}}ByID (ctx context.
 {{- range .Filters}}
 	{{.}} *{{$t.FieldType .}},
 {{- end}}
+{{- range .ReferedFields }}
+	{{. -}}ID *string,
+{{- end }}
 {{- end}}
 `
 
@@ -149,17 +179,22 @@ const modelTyp = `
 package {{ .Module -}}store
 
 type {{title .Name}} struct {
-	{{- counter 0}} 
+	{{- range .ReferedFields}}
+	{{ title .}}ID *string ` + "`bson:\"{{- . -}}_id\"`" + `
+	{{- end}}
 	{{- range .Fields}}
 	{{- if  (not (and .IsJoinedData  .IsList))}}
+	{{- if eq .Name "id" }}
+	{{ .GoName true}}  {{- .GoType }}` + "`bson:\"_id\"`" + `
+	{{- else}}
 	{{ .GoName true}}  {{- .GoType }}` + "`bson:\"{{- .Name}}\"`" + `  
+	{{- end}}
 	{{- end}}
 	{{- end}}
 }
 
 {{- if .Mutatable}}
 type {{title .Name -}}Update struct {
-	{{- counter 0}} 
 	{{- range .Fields}}
 	{{- if  .IsMutatable }}
 	{{ .GoName true}}  {{- .GoType }}` + "`bson:\"{{- .Name}}\"`" + `  
@@ -180,7 +215,7 @@ type Store interface {
 	// {{ .Name }} methods
 	Create{{- title .Name -}} (context.Context,  *{{- title .Name}}) (*{{- title .Name}}, error)
 	Get{{- title .Name -}}ByID (context.Context, string) (*{{- title .Name}}, error)
-	Get{{- title (plural .Name) -}} (context.Context,
+	Get{{- title (plural .Name) -}} (context.Context, []string,
 		{{- if not (empty .SearchFields) -}}
 		*string,
 		{{- end -}}
@@ -199,6 +234,9 @@ type Store interface {
 {{- $t := . -}}
 {{- range .Filters -}}
 	*{{$t.FieldType . -}},
+{{- end -}}
+{{- range .ReferedFields -}}
+	*string,
 {{- end -}}
 {{- end -}}
 `
