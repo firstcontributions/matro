@@ -36,7 +36,10 @@ func (w *GoWriter) runGoImports(ctx context.Context) error {
 		return err
 	}
 	filepath := "/tmp/matro/tmp.go"
-	if err := exec.Command("goimports", "-w", filepath).Run(); err != nil {
+	cmd := exec.Command("goimports", "-w", filepath)
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
+	if err := cmd.Run(); err != nil {
 		return err
 	}
 	d, err := ioutil.ReadFile(filepath)
