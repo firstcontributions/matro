@@ -41,6 +41,55 @@ func New {{- title .Name -}}Store(ctx context.Context, url string) (* {{ title .
 func (s *{{- title .Name -}}Store) getCollection (collection string) *mongo.Collection {
 	return s.client.Database(DB{{ title (plural .Name) -}}).Collection(collection)
 }
+
+func (s *{{- title .Name -}}Store) getPagination(
+	ctx context.Context,
+	collection string, 
+	query bson.M,
+	first *int64, 
+	last *int64,
+) (
+	*int64,
+	*int64,
+	*bool, 
+	*bool,
+	error,
+) {
+	count, err := s.getCollection(collection).CountDocuments(ctx, query)
+	if err != nil {
+		return nil, nil, nil, nil, err
+	}
+	tmpSkip := int64(-1)
+	tmpLimit := int64(-1)
+	defaultFirst := int64(10)
+	if first == nil && last == nil {
+		first = &defaultFirst
+	}
+	if first != nil && count > *first {
+		tmpLimit = *first
+	}
+	if last != nil {
+		if (tmpLimit != -1 && tmpLimit > *last) {
+			tmpSkip = tmpLimit - *last;
+			tmpLimit = tmpLimit - tmpSkip;
+		} else if (tmpLimit == -1 && count > *last) {
+			tmpSkip = count - *last;
+		}
+	}
+
+	var limit, skip *int64
+	if tmpLimit != -1 {
+		limit = &tmpLimit
+	}
+	if tmpSkip != -1 {
+		skip = &tmpSkip
+	}
+
+	hasNextPage := first != nil && count > *first
+	hasPreviousPage :=  last != nil && count > *last
+
+	return skip, limit, &hasNextPage, &hasPreviousPage, nil
+}
 `
 
 const crudTpl = `
@@ -88,9 +137,12 @@ func (s *{{- title .Module -}}Store) Get{{- title (plural .Name) -}} (
 	{{- template "getargs" . }}
 	after *string,
 	before *string,
-	limit *int64, 
+	first *int64, 
+	last *int64,
 ) (
 	[]*{{ .Module -}}store. {{- title .Name}}, 
+	*bool,
+	*bool,
 	error,
 ) {
 	qb := mongoqb.NewQueryBuilder()
@@ -119,20 +171,32 @@ func (s *{{- title .Module -}}Store) Get{{- title (plural .Name) -}} (
 	if before != nil {
 		qb.Lt("_id", before)
 	}
+
+	skip, limit, hasNextPage, hasPreviousPage, err := s.getPagination(
+		ctx,
+		Collection{{title (plural .Name)}},
+		qb.Build(),
+		first,
+		last,
+	)
+	if err != nil {
+		return nil, nil, nil, err
+	}
 	options := &options.FindOptions{
 		Limit: limit,
+		Skip: skip,
 	}
 
 	var {{plural .Name}} []*{{ .Module -}}store. {{- title .Name}}
 	cursor, err := s.getCollection(Collection{{title (plural .Name)}}).Find(ctx, qb.Build(), options)
 	if  err != nil {
-		return nil, err
+		return nil, nil, nil, err
 	}
 	err = cursor.All(ctx, &{{- plural .Name}})
 	if err != nil {
-		return nil, err
+		return nil, nil, nil, err
 	}
-	return {{ plural .Name}}, nil
+	return {{ plural .Name}}, hasNextPage, hasPreviousPage, nil
 }
 {{- if .Mutatable}}
 func (s *{{- title .Module -}}Store) Update{{- title .Name -}} (ctx context.Context, id string, {{.Name -}}Update *{{-  .Module -}}store. {{- title .Name -}}Update) (error) {
@@ -220,7 +284,7 @@ type Store interface {
 		*string,
 		{{- end -}}
 		{{- template "getargs" . -}}
-		*string,*int) ([]* {{- title .Name}}, error) 
+		*string, *string, *int64, *int64) ([]* {{- title .Name}}, error) 
 
 	{{- if .Mutatable}}
 	Update{{- title .Name -}} (context.Context, *{{- title .Name -}}Update) (error) 

@@ -62,6 +62,28 @@ type {{.ConnectionName}} struct {
 	PageInfo *PageInfo
 }
 
+func New{{.ConnectionName}}(
+	data []*{{- .Module -}}store.{{- title .Name}},
+	hasNextPage *bool,
+	hasPreviousPage *bool,
+) *{{.ConnectionName}}{
+	edges := []* {{- .EdgeName}}{}
+	for _, d := range data {
+		node := New {{- title .Name}}(d)
+		edges = append(edge, &{{- .EdgeName}}{
+			Node : node,
+			Cursor: node.ID(),
+		})
+	}
+	return &{{.ConnectionName}} {
+		Edges: edges,
+		PageInfo: &PageInfo{
+			HasNextPage : hasNextPage,
+			HasPreviousPage : hasPreviousPage,
+		},
+	}
+}
+
 type {{.EdgeName}} struct {
 	Node *{{- title .Name}}
 	Cursor string

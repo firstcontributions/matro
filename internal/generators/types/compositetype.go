@@ -135,25 +135,33 @@ func (f *Field) GraphQLFormattedName() string {
 	}
 	args := []string{}
 	for _, a := range f.Args {
-		args = append(args, fmt.Sprintf("%s: %s", a.Name, GetGraphQLType(a.Type)))
+		args = append(args, fmt.Sprintf("%s: %s", a.Name, GetGraphQLType(&a)))
 	}
 	return fmt.Sprintf("%s(%s)", f.Name, strings.Join(args, ", "))
 }
 
 // GraphQLFortmattedType return the graphql type name
 func (f *Field) GraphQLFortmattedType() string {
-	t := GetGraphQLType(f.Type)
+	t := GetGraphQLType(f)
 	if f.IsPaginated {
 		plType := pluralize.NewClient().Plural(f.Type)
 		t = fmt.Sprintf("%sConnection", utils.ToTitleCase(plType))
 	}
-	if f.IsList {
+	if f.IsList && !f.IsPaginated {
 		t = fmt.Sprintf("[%s]", t)
 	}
 	if !f.IsNullable {
 		t = t + "!"
 	}
 	return t
+}
+
+func (f *Field) ArgNames() []string {
+	args := []string{}
+	for _, a := range f.Args {
+		args = append(args, a.Name)
+	}
+	return args
 }
 
 var auditFields = []*Field{

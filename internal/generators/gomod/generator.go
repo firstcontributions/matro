@@ -2,6 +2,7 @@ package gomod
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/exec"
 
@@ -25,6 +26,10 @@ func NewGenerator(path string, d *parser.Definition) *Generator {
 
 // Generate generates a go mod file and get all dependencies
 func (g *Generator) Generate(ctx context.Context) error {
+	if _, err := os.Stat(fmt.Sprintf("%s/go.mod", g.Path)); err == nil {
+		// file exists
+		return nil
+	}
 	if err := utils.EnsurePath(g.Path); err != nil {
 		return err
 	}

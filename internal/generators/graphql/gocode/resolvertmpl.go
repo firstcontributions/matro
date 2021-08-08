@@ -16,24 +16,47 @@ type Resolver struct {
 	{{- end}}
 }
 
-func (r *Resolver) Node(ctx context.Context, in NodeIDInput) (*NodeResolver, error) {
-	id, err := ParseGraphqlID(in.ID)
+
+type IDMarshaller struct {
+	Type string
+	ID string
+}
+
+func NewIDMarshaller(t, id string) *IDMarshaller {
+	return &IDMarshaller{
+		Type:t,
+		ID: id,
+	}
+}
+
+type PageInfo struct {
+	HasNextPage *bool
+	HasPreviousPage *bool
+}
+
+func ParseGraphqlID(gid *graphql.ID) (*IDMarshaller, error) {
+	if gid == nil {
+		return nil, errors.New("empty ID")
+	}
+	sDec, err := base64.StdEncoding.DecodeString(string(*gid))
 	if err != nil {
-		return nil, err
+		return nil, errors.New("invalid ID")
 	}
-	switch id.Type {
-		{{- range .Types}}
-	case "{{- .Name -}}":
-		{{.Name}}Data, err := r.{{- .Module -}}Store.Get{{- title .Name -}}ByID(ctx, id.ID)
-		if err != nil {
-			return nil, err
-		}
-		{{.Name -}}Node := New{{- title .Name}}({{.Name}}Data)
-		return &NodeResolver{
-			Node: {{.Name -}}Node,
-		}
-		{{- end}}
+	ids := strings.Split(string(sDec), ":")
+	if len(ids) != 2 {
+		return nil, errors.New("invalid ID")
 	}
-	return nil, errors.New("invalid ID")
+	return &IDMarshaller {
+		Type: ids[0],
+		ID: ids[1],
+	}, nil
+}
+
+func (id *IDMarshaller) ToGraphqlID() *graphql.ID {
+	encoded := base64.StdEncoding.EncodeToString(
+		[]byte(id.Type + ":" + id.ID),
+	)
+	gid := graphql.ID(encoded)
+	return &gid
 }
 `

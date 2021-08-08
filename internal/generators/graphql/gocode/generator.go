@@ -22,7 +22,7 @@ type Generator struct {
 func NewGenerator(path string, d *parser.Definition) *Generator {
 	td := types.NewTypeDefs(path, d)
 	return &Generator{
-		Path:     path,
+		Path:     fmt.Sprintf("%s/internal/graphql/schema", path),
 		TypeDefs: td,
 		Repo:     d.Repo,
 		Modules:  d.Modules,
@@ -32,9 +32,13 @@ func NewGenerator(path string, d *parser.Definition) *Generator {
 // Generate generates all graphql server codes
 // (type definitons, query resolvers, mutation executions, ...)
 func (g *Generator) Generate(ctx context.Context) error {
-	path := fmt.Sprintf("%s/internal/graphql/schema", g.Path)
 	for _, t := range g.Types {
-		if err := g.generateTypes(ctx, typesTpl, t, path, t.Name+".go"); err != nil {
+		if err := g.generateTypeResolver(ctx, t); err != nil {
+			return err
+		}
+	}
+	for _, q := range g.Queries {
+		if err := g.generateQueryResolver(ctx, q); err != nil {
 			return err
 		}
 	}
@@ -44,18 +48,18 @@ func (g *Generator) Generate(ctx context.Context) error {
 	return g.generateRootResolver(ctx)
 }
 
-// generateTypes generate types based on the given template
-func (g *Generator) generateTypes(ctx context.Context, tmpl string, data *types.CompositeType, path, filename string) error {
+// generateTypeResolver generate types based on the given template
+func (g *Generator) generateTypeResolver(ctx context.Context, t *types.CompositeType) error {
 	return writer.CompileAndWrite(
 		ctx,
-		path,
-		filename,
-		tmpl,
+		g.Path,
+		t.Name+"resolver.go",
+		typesTpl,
 		struct {
 			*types.CompositeType
 			Repo string
 		}{
-			CompositeType: data,
+			CompositeType: t,
 			Repo:          g.Repo,
 		},
 	)
@@ -63,11 +67,10 @@ func (g *Generator) generateTypes(ctx context.Context, tmpl string, data *types.
 
 // generateTypes generate types based on the given template
 func (g *Generator) generateNodeResolver(ctx context.Context) error {
-	path := fmt.Sprintf("%s/internal/graphql/schema", g.Path)
 	return writer.CompileAndWrite(
 		ctx,
-		path,
-		"node.go",
+		g.Path,
+		"noderesolver.go",
 		nodeTmpl,
 		g,
 	)
@@ -75,12 +78,28 @@ func (g *Generator) generateNodeResolver(ctx context.Context) error {
 
 // generateRootResolver generate root query resolver
 func (g *Generator) generateRootResolver(ctx context.Context) error {
-	path := fmt.Sprintf("%s/internal/graphql/schema", g.Path)
 	return writer.CompileAndWrite(
 		ctx,
-		path,
+		g.Path,
 		"resolver.go",
 		resolverTmpl,
 		g,
+	)
+}
+
+// generateQueryResolver generate root query resolver
+func (g *Generator) generateQueryResolver(ctx context.Context, q types.Query) error {
+	return writer.CompileAndWrite(
+		ctx,
+		g.Path,
+		q.Name+"resolver.go",
+		queryResolverTmpl,
+		struct {
+			Query      types.Query
+			ReturnType *types.CompositeType
+		}{
+			Query:      q,
+			ReturnType: g.Types[q.Type],
+		},
 	)
 }
