@@ -22,5 +22,6 @@ func FuncMap() template.FuncMap {
 		"empty": func(a []string) bool {
 			return len(a) == 0
 		},
+		"isElemOfStrArray": utils.IsElementOfStringArray,
 	}
 }
