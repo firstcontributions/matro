@@ -61,12 +61,5 @@ func (w *TextWriter) write(path, filename string) error {
 
 // Write will write contents to given file
 func (w *TextWriter) Write(ctx context.Context) error {
-	fw, err := utils.GetFileWriter(w.path, w.filename)
-	if err != nil {
-		return err
-	}
-	if _, err := fw.Write(w.data); err != nil {
-		return err
-	}
-	return fw.Close()
+	return w.write(w.path, w.filename)
 }
