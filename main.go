@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log"
 
 	"github.com/firstcontributions/matro/internal/ctxkeys"
 	"github.com/firstcontributions/matro/internal/generators"
@@ -12,19 +13,20 @@ import (
 func main() {
 	d, err := parser.NewDefinition().ParseFromFile("./input.json")
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	generatorTypes := []generators.Type{
 		generators.TypeGQLSchema,
 		generators.TypeGQLServer,
 		generators.TypeGRPCProto,
+		generators.TypeGRPCStore,
 		generators.TypeMongoModel,
 		generators.TypeGoMod,
 	}
 
 	if err := generate(d, generatorTypes); err != nil {
 		// this can be a pretty print for the final version
-		panic(err)
+		log.Fatal(err)
 	}
 }
 
@@ -40,7 +42,7 @@ func generate(d *parser.Definition, generatorTypes []generators.Type) error {
 	// this needs to be taken as an command line argument, hardcoding for now
 	// the default value can be $(pwd)
 	// it wont be handy to use $(pwd) as default in development time
-	basePath := "./__generated"
+	basePath := "./"
 	ctx = context.WithValue(ctx, ctxkeys.Spinner, s)
 	for _, gt := range generatorTypes {
 		g := generators.GetGenerator(gt, basePath, d)

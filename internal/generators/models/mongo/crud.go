@@ -1,48 +1,5 @@
 package mongo
 
-const storeTpl = `
-package mongo
-
-import (
-	"context"
-	"errors"
-	"go.mongodb.org/mongo-driver/mongo"
-)
-
-const (
-	DB{{title (plural .Name) -}} = "{{- plural .Name }}"
-	{{- range .Types }}
-	Collection{{title (plural .Name)}} = "{{- plural .Name }}"
-	{{- end}}
-)
-
-type {{ title .Name -}}Store struct {
-	client *mongo.Client
-}
-
-// New {{- title .Name -}}Store makes connection to mongo server by provided url 
-// and return an instance of the client
-func New {{- title .Name -}}Store(ctx context.Context, url string) (* {{ title .Name -}}Store, error) {
-	client, err := mongo.NewClient(options.Client().ApplyURI(url))
-	if err != nil {
-		return nil, err
-	}
-	if err := client.Connect(ctx); err != nil {
-		return nil, err
-	}
-	if err := client.Ping(ctx, readpref.Primary()); err != nil {
-		return nil, err 
-	}
-	return &{{- title .Name -}}Store {
-		client: client,
-	}, nil
-} 
-
-func (s *{{- title .Name -}}Store) getCollection (collection string) *mongo.Collection {
-	return s.client.Database(DB{{ title (plural .Name) -}}).Collection(collection)
-}
-`
-
 const crudTpl = `
 package mongo
 
@@ -58,8 +15,8 @@ import (
 
 func (s *{{- title .Module -}}Store) Create{{- title .Name -}} (ctx context.Context, {{.Name}} *{{-  .Module -}}store. {{- title .Name}}) (* {{ .Module -}}store. {{- title .Name}}, error) {
 	now := time.Now()
-	{{.Name -}}.TimeCreated = &now
-	{{.Name -}}.TimeUpdated = &now
+	{{.Name -}}.TimeCreated = now
+	{{.Name -}}.TimeUpdated = now
 	if _, err := s.getCollection(Collection{{title (plural .Name)}}).InsertOne(ctx, {{.Name}}); err != nil {
 		return nil, err
 	}
@@ -81,32 +38,85 @@ func (s *{{- title .Module -}}Store) Get{{- title .Name -}}ByID (ctx context.Con
 
 func (s *{{- title .Module -}}Store) Get{{- title (plural .Name) -}} (
 	ctx context.Context,
+	ids []string,
 	{{- if not (empty .SearchFields)}}
 	search *string,
 	{{- end}}
 	{{- template "getargs" . }}
-	offset *string,
-	limit *int, 
+	after *string,
+	before *string,
+	first  *int64, 
+	last  *int64,
 ) (
 	[]*{{ .Module -}}store. {{- title .Name}}, 
+	bool,
+	bool,
+	string,
+	string,
 	error,
 ) {
 	qb := mongoqb.NewQueryBuilder()
+	if len(ids) > 0 {
+		qb.In("_id", ids)
+	}
 	{{- range .Filters }}
-	qb.Eq("{{- . -}}", {{.}})
+	if {{ camel .}} != nil {
+		qb.Eq("{{- . -}}", {{ camel .}})
+	}
 	{{- end }}
 
-	var {{plural .Name}} []*{{ .Module -}}store. {{- title .Name}}
-	if err := s.getCollection(Collection{{title (plural .Name)}}).Find(ctx, qb.Build()).Decode(&{{- plural .Name -}}); err != nil {
-		if errors.Is(err, mongo.ErrNoDocuments) {
-			return nil, nil
+	{{- range .ReferedFields }}
+		if {{. -}}ID != nil {
+			qb.Eq("{{- . -}}_id", {{. -}}ID)
 		}
-		return nil, err
+	{{- end }}
+	{{- if not (empty .SearchFields)}}
+	if search != nil {
+		qb.Search(*search)
 	}
-	return &{{- plural .Name}}, nil
+	{{- end}}
+	
+	limit, order, cursorStr := utils.GetLimitAndSortOrderAndCursor(first, last, after, before)
+	if cursorStr != nil {
+		c := cursor.FromString(*cursorStr)
+		if c != nil {
+			if order == 1 {
+				qb.Lt("time_created", c.TimeStamp)
+				qb.Lt("_id", c.ID)
+			} else {
+				qb.Gt("time_created", c.TimeStamp)
+				qb.Gt("_id", c.ID)
+			}
+		}
+	}
+	sortOrder := utils.GetSortOrder(order)
+
+	options := &options.FindOptions{
+		Limit: &limit,
+		Sort:  sortOrder,
+	}
+
+	var firstCursor, lastCursor string
+
+	var {{plural .Name}} []*{{ .Module -}}store. {{- title .Name}}
+	mongoCursor, err := s.getCollection(Collection{{title (plural .Name)}}).Find(ctx, qb.Build(), options)
+	if  err != nil {
+		return nil, false, false, firstCursor, lastCursor, err
+	}
+	err = mongoCursor.All(ctx, &{{- plural .Name}})
+	if err != nil {
+		return nil, false, false, firstCursor, lastCursor, err
+	}
+	count := len({{ plural .Name}})
+	if  count > 0 {
+		firstCursor = cursor.NewCursor({{ plural .Name -}}[0].Id, {{ plural .Name -}}[0].TimeCreated).String()
+		lastCursor = cursor.NewCursor({{ plural .Name -}}[count-1].Id, {{ plural .Name -}}[count-1].TimeCreated).String()
+	}
+	hasNextPage, hasPreviousPage := utils.CheckHasNextPrevPages(count, int(limit), order)
+	return {{ plural .Name}}, hasNextPage, hasPreviousPage, firstCursor, lastCursor, nil
 }
 {{- if .Mutatable}}
-func (s *{{- title .Module -}}Store) Update{{- title .Name -}} (ctx context.Context, {{.Name -}}Update *{{-  .Module -}}store. {{- title .Name -}}Update) (error) {
+func (s *{{- title .Module -}}Store) Update{{- title .Name -}} (ctx context.Context, id string, {{.Name -}}Update *{{-  .Module -}}store. {{- title .Name -}}Update) (error) {
 	qb := mongoqb.NewQueryBuilder().
 			Eq("_id", id)
 
@@ -116,7 +126,7 @@ func (s *{{- title .Module -}}Store) Update{{- title .Name -}} (ctx context.Cont
 	u := mongoqb.NewUpdateMap().
 	SetFields({{- .Name -}}Update)
 
-	um, err := u.Build()
+	um, err := u.BuildUpdate()
 	if err != nil {
 		return err
 	}
@@ -137,32 +147,11 @@ func (s *{{- title .Module -}}Store) Delete{{- title .Name -}}ByID (ctx context.
 
 {{- define "getargs"}}
 {{- $t := .}}
+{{- range .ReferedFields }}
+	{{. -}}ID *string,
+{{- end }}
 {{- range .Filters}}
-	{{.}} *{{$t.FieldType .}},
+	{{ camel .}} *{{$t.FieldType .}},
 {{- end}}
-{{- end}}
-`
-
-const modelTyp = `
-package {{ .Module -}}store
-
-type {{title .Name}} struct {
-	{{- counter 0}} 
-	{{- range .Fields}}
-	{{- if  (not (and .IsJoinedData  .IsList))}}
-	{{ .GoName}}  {{- .GoType}}` + "`bson:\"{{- .Name}}\"`" + `  
-	{{- end}}
-	{{- end}}
-}
-
-{{- if .Mutatable}}
-type {{title .Name -}}Update struct {
-	{{- counter 0}} 
-	{{- range .Fields}}
-	{{- if  .IsMutatable }}
-	{{ .GoName}}  {{- .GoType}}` + "`bson:\"{{- .Name}}\"`" + `  
-	{{- end}}
-	{{- end}}
-}
 {{- end}}
 `

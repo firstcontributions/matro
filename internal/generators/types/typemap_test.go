@@ -1,23 +1,30 @@
 package types
 
-import "testing"
+import (
+	"testing"
+)
 
 func Test_GetGraphQLType(t *testing.T) {
 
 	tests := []struct {
 		name string
-		t    string
+		t    *Field
 		want string
 	}{
 		{
 			name: "should find a valid type for a primitive type (id)",
-			t:    "id",
+			t:    &Field{Type: "id"},
 			want: "ID",
 		},
 		{
-			name: "should find a valid type for a composite type (id)",
-			t:    "user",
+			name: "should find a valid type for a composite type",
+			t:    &Field{Type: "user"},
 			want: "User",
+		},
+		{
+			name: "should find a valid type for a composite type array",
+			t:    &Field{Type: "user", IsList: true},
+			want: "[User]",
 		},
 	}
 	for _, tt := range tests {

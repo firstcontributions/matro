@@ -43,7 +43,7 @@ func (w *TextWriter) Compile(ctx context.Context, tmpl string, data interface{})
 // Format is supposed to format the code, as text formatter can be
 // any type of code we cant implement any formatter. This leave as
 // an empty function to implement Writer interface
-func (w *TextWriter) Format(ctx context.Context) error {
+func (*TextWriter) Format(ctx context.Context) error {
 	return nil
 }
 
@@ -61,12 +61,5 @@ func (w *TextWriter) write(path, filename string) error {
 
 // Write will write contents to given file
 func (w *TextWriter) Write(ctx context.Context) error {
-	fw, err := utils.GetFileWriter(w.path, w.filename)
-	if err != nil {
-		return err
-	}
-	if _, err := fw.Write(w.data); err != nil {
-		return err
-	}
-	return fw.Close()
+	return w.write(w.path, w.filename)
 }

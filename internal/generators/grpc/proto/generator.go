@@ -73,13 +73,14 @@ func (g *Generator) generateProtoForModule(ctx context.Context, m Module, tmpl s
 }
 
 // generateGRPCService generates grpc service stub from the proto file
-func (g *Generator) generateGRPCService(protoPath string) error {
-	if _, err := exec.Command(
+func (*Generator) generateGRPCService(protoPath string) error {
+	fmt.Println("grpc ")
+	if res, err := exec.Command(
 		"protoc",
+		"--go_out=plugins=grpc:.",
 		protoPath,
-		"--go_out="+g.Path,
-		"--go-grpc_out="+g.Path,
 	).Output(); err != nil {
+		fmt.Println("grpc ", string(res))
 		return err
 	}
 	return nil

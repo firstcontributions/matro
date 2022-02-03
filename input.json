@@ -14,6 +14,17 @@
             "entities": ["story", "comment"]
         }
     ],
+    "high_level_queries": [
+        {
+            "name": "feeds",
+            "type" :"list",
+            "paginated": true,
+            "schema" : "story",
+            "meta" : {
+                "filters": ["created_by"]
+            }
+        }
+    ],
     "data_schema":{
         "user":{
             "name": "user",
@@ -21,7 +32,7 @@
             "meta": {
                 "search_fields": ["firstname", "lastname", "github_handle"],
                 "filters": ["github_handle"],
-                "mutatable_fileds" :["firstname", "lastname", "github_handle"],
+                "mutatable_fields" :["firstname", "lastname", "github_handle"],
                 "graphql_ops": "CRUD"
             },
             "properties":{
@@ -49,7 +60,7 @@
             "meta": {
                 "graphql_ops": ["CRUD"],
                 "filters": ["created_by"],
-                "mutatable_fileds" :["title", "content", "abstract"]
+                "mutatable_fields" :["title", "content", "abstract"]
             },
             "properties": {
                 "id": "id",

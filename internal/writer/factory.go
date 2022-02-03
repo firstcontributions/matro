@@ -29,8 +29,7 @@ const (
 
 // GetWriter is a factory method for writers
 func GetWriter(path, filename string) IWriter {
-	switch getFileExtension(filename) {
-	case "go":
+	if getFileExtension(filename) == "go" {
 		return NewGoWriter(path, filename)
 	}
 	return NewTextWriter(path, filename)
@@ -58,11 +57,11 @@ func CompileAndWrite(
 	if err := w.Compile(ctx, tmpl, data); err != nil {
 		return err
 	}
-	if err := w.Format(ctx); err != nil {
-		fmt.Println(err)
+	if err := w.Write(ctx); err != nil {
 		return err
 	}
-	return w.Write(ctx)
+	return w.Format(ctx)
+	// return nil
 }
 func getSpinner(ctx context.Context) *spinner.Spinner {
 	return ctx.Value(ctxkeys.Spinner).(*spinner.Spinner)

@@ -2,8 +2,8 @@ package writer
 
 import (
 	"context"
+	"fmt"
 	"go/format"
-	"io/ioutil"
 	"os"
 	"os/exec"
 )
@@ -32,17 +32,12 @@ func (w *GoWriter) Format(ctx context.Context) error {
 }
 
 func (w *GoWriter) runGoImports(ctx context.Context) error {
-	if err := w.write("/tmp/matro", "tmp.go"); err != nil {
-		return err
-	}
-	filepath := "/tmp/matro/tmp.go"
-	if err := exec.Command("goimports", "-w", filepath).Run(); err != nil {
-		return err
-	}
-	d, err := ioutil.ReadFile(filepath)
-	if err != nil {
-		return err
-	}
-	w.data = d
-	return os.Remove(filepath)
+	return goImport(fmt.Sprintf("%s/%s", w.path, w.filename))
+}
+
+func goImport(file string) error {
+	cmd := exec.Command("goimports", "-w", file)
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
+	return cmd.Run()
 }

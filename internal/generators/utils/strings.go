@@ -11,3 +11,17 @@ func ToTitleCase(s string) string {
 	}
 	return strings.Join(parts, "")
 }
+
+func ToCamelCase(s string) string {
+	title := ToTitleCase(s)
+	return strings.ToLower(title[:1]) + title[1:]
+}
+
+func IsElementOfStringArray(arr []string, str string) bool {
+	for _, s := range arr {
+		if s == str {
+			return true
+		}
+	}
+	return false
+}
