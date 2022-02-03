@@ -43,7 +43,7 @@ func (w *TextWriter) Compile(ctx context.Context, tmpl string, data interface{})
 // Format is supposed to format the code, as text formatter can be
 // any type of code we cant implement any formatter. This leave as
 // an empty function to implement Writer interface
-func (w *TextWriter) Format(ctx context.Context) error {
+func (*TextWriter) Format(ctx context.Context) error {
 	return nil
 }
 
