@@ -14,6 +14,7 @@ func FuncMap() template.FuncMap {
 
 	return template.FuncMap{
 		"title":    utils.ToTitleCase,
+		"camel":    utils.ToCamelCase,
 		"type":     types.GetGraphQLType,
 		"grpcType": types.GetGRPCType,
 		"add":      func(a, b int) int { return a + b },
@@ -23,5 +24,9 @@ func FuncMap() template.FuncMap {
 			return len(a) == 0
 		},
 		"isElemOfStrArray": utils.IsElementOfStringArray,
+		"getTypeFromMap": func(m map[string]*types.CompositeType, t string) *types.CompositeType {
+			return m[t]
+		},
+		"isCompositeType": types.IsCompositeType,
 	}
 }

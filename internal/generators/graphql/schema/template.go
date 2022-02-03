@@ -4,7 +4,7 @@ const schemaTmpl = `
 schema {
 	query: Query
 }
-
+scalar Time
 type Query {
 	viewer: User
   
@@ -15,8 +15,9 @@ type Query {
 	): Node
 
 	{{- range .Queries }}
-
+	{{- if (not .Parent)}}
 	{{.GraphQLFormattedName}}: {{.GraphQLFortmattedType}}
+	{{- end}}
 	{{- end}}
 }
 
@@ -27,8 +28,8 @@ interface Node {
 type PageInfo {
 	startCursor: String
 	endCursor: String
-	hasNextPage: Bool!
-	hasPreviousPage: Bool!
+	hasNextPage: Boolean!
+	hasPreviousPage: Boolean!
 }
 
 {{- range .Types}}

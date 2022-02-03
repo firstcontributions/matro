@@ -57,10 +57,12 @@ func (g *Generator) generateTypeResolver(ctx context.Context, t *types.Composite
 		typesTpl,
 		struct {
 			*types.CompositeType
-			Repo string
+			Repo  string
+			Types map[string]*types.CompositeType
 		}{
 			CompositeType: t,
 			Repo:          g.Repo,
+			Types:         g.Types,
 		},
 	)
 }
@@ -92,7 +94,7 @@ func (g *Generator) generateQueryResolver(ctx context.Context, q types.Query) er
 	return writer.CompileAndWrite(
 		ctx,
 		g.Path,
-		q.Name+"resolver.go",
+		q.Name+"queryresolver.go",
 		queryResolverTmpl,
 		struct {
 			Query      types.Query

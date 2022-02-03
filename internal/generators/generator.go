@@ -7,6 +7,7 @@ import (
 	"github.com/firstcontributions/matro/internal/generators/graphql/gocode"
 	"github.com/firstcontributions/matro/internal/generators/graphql/schema"
 	"github.com/firstcontributions/matro/internal/generators/grpc/proto"
+	"github.com/firstcontributions/matro/internal/generators/grpc/store"
 	"github.com/firstcontributions/matro/internal/generators/models/mongo"
 	"github.com/firstcontributions/matro/internal/parser"
 )
@@ -26,6 +27,8 @@ const (
 	TypeGQLServer
 	// TypeGRPCProto defines the type for gRPC protocol buffer generator
 	TypeGRPCProto
+	// TypeGRPCStore defines the type for gRPC protocol buffer generator
+	TypeGRPCStore
 	// TypeMongoModel defines the type for mongo model code generator
 	TypeMongoModel
 	// TypeGoMod inits go.mod and get all dependencies
@@ -41,6 +44,8 @@ func GetGenerator(t Type, path string, d *parser.Definition) IGenerator {
 		return gocode.NewGenerator(path, d)
 	case TypeGRPCProto:
 		return proto.NewGenerator(path, d)
+	case TypeGRPCStore:
+		return store.NewGenerator(path, d)
 	case TypeMongoModel:
 		return mongo.NewGenerator(path, d)
 	case TypeGoMod:

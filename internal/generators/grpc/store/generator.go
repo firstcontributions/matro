@@ -1,4 +1,4 @@
-package mongo
+package store
 
 import (
 	"context"
@@ -47,17 +47,8 @@ func NewGenerator(path string, d *parser.Definition) *Generator {
 // Generate generates a store interface, mongo implementation for the interface,
 // data schema, crud operations for all the types in all given modules
 func (g *Generator) Generate(ctx context.Context) error {
-	if err := g.generateCursorPkg(ctx); err != nil {
-		return err
-	}
-	if err := g.generateUtilsPkg(ctx); err != nil {
-		return err
-	}
 	for _, m := range g.modules {
-		if err := g.generateMongoStore(ctx, m); err != nil {
-			return err
-		}
-		if err := g.generateStore(ctx, m); err != nil {
+		if err := g.generateGRPCStore(ctx, m); err != nil {
 			return err
 		}
 		for _, t := range m.Types {
@@ -66,53 +57,20 @@ func (g *Generator) Generate(ctx context.Context) error {
 					return err
 				}
 			}
-			if err := g.generateModelTypes(ctx, m, t); err != nil {
-				return err
-			}
+
 		}
 	}
 	return nil
 }
 
-func (g *Generator) generateCursorPkg(ctx context.Context) error {
-	return writer.CompileAndWrite(
-		ctx,
-		fmt.Sprintf("%s/pkg/cursor/", g.Path),
-		"cursor.go",
-		cursorTmpl,
-		g,
-	)
-}
-
-func (g *Generator) generateUtilsPkg(ctx context.Context) error {
-	return writer.CompileAndWrite(
-		ctx,
-		fmt.Sprintf("%s/internal/models/utils", g.Path),
-		"pagination.go",
-		utilsTmpl,
-		g,
-	)
-}
-
-// generateStore generates  the store interface,
-func (g *Generator) generateStore(ctx context.Context, m Module) error {
-	return writer.CompileAndWrite(
-		ctx,
-		fmt.Sprintf("%s/internal/models/%sstore", g.Path, m.Name),
-		"store.go",
-		storeInterfaceTpl,
-		m,
-	)
-}
-
 // generateMongoStore generates a mongo implementation for the store interface,
 // constants associated, connection pool manager etc
-func (g *Generator) generateMongoStore(ctx context.Context, m Module) error {
+func (g *Generator) generateGRPCStore(ctx context.Context, m Module) error {
 	return writer.CompileAndWrite(
 		ctx,
-		fmt.Sprintf("%s/internal/models/%sstore/mongo", g.Path, m.Name),
+		fmt.Sprintf("%s/internal/models/%sstore/grpc", g.Path, m.Name),
 		"store.go",
-		storeTpl,
+		storeTmpl,
 		m,
 	)
 }
@@ -125,9 +83,9 @@ func (g *Generator) generateModel(ctx context.Context, module string, typ *types
 
 	return writer.CompileAndWrite(
 		ctx,
-		fmt.Sprintf("%s/internal/models/%sstore/mongo", g.Path, module),
+		fmt.Sprintf("%s/internal/models/%sstore/grpc", g.Path, module),
 		typ.Name+".go",
-		crudTpl,
+		crudTmpl,
 		struct {
 			Module string
 			*types.CompositeType
@@ -139,23 +97,4 @@ func (g *Generator) generateModel(ctx context.Context, module string, typ *types
 		},
 	)
 
-}
-
-// generateModelTypes generates data schema for the given types
-func (g *Generator) generateModelTypes(ctx context.Context, module Module, typ *types.CompositeType) error {
-	return writer.CompileAndWrite(
-		ctx,
-		fmt.Sprintf("%s/internal/models/%sstore", g.Path, module.Name),
-		typ.Name+".go",
-		modelTyp,
-		struct {
-			Module string
-			*types.CompositeType
-			HaveProto bool
-		}{
-			Module:        module.Name,
-			CompositeType: typ,
-			HaveProto:     module.DataSource == "grpc",
-		},
-	)
 }

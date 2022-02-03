@@ -5,6 +5,7 @@ import "github.com/firstcontributions/matro/internal/parser"
 // Query encapsulates a graphql query metadata
 type Query struct {
 	*Field
+	Parent *CompositeType
 }
 
 func getQueries(d *parser.Definition) []Query {

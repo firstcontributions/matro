@@ -7,15 +7,42 @@ import (
 	{{- $g := .}}
 	{{- range .Modules }}
 	"{{- $g.Repo -}}/internal/models/{{- .Name -}}store"
+	graphql "github.com/graph-gophers/graphql-go"
 	{{- end}}
 )
 
-type Resolver struct {
+type Store struct {
 	{{- range .Modules }} 
 	{{ .Name -}}Store {{ .Name -}}store.Store
 	{{- end}}
 }
 
+func NewStore(
+	{{- range .Modules }} 
+	{{ .Name -}}Store {{ .Name -}}store.Store,
+	{{- end}}
+) *Store {
+	return &Store{
+		{{- range .Modules }} 
+		{{ .Name -}}Store :{{ .Name -}}Store,
+		{{- end}}
+	}
+}
+
+type Resolver struct {
+	*Store
+}
+
+
+func (r *Resolver) Viewer(ctx context.Context) (*User, error) {
+	id := ctx.Value("user_id").(string)
+
+	data, err := r.usersStore.GetUserByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return NewUser(data), nil
+}
 
 type IDMarshaller struct {
 	Type string
@@ -30,15 +57,14 @@ func NewIDMarshaller(t, id string) *IDMarshaller {
 }
 
 type PageInfo struct {
-	HasNextPage *bool
-	HasPreviousPage *bool
+	HasNextPage bool
+	HasPreviousPage bool
+	StartCursor *string
+	EndCursor *string
 }
 
-func ParseGraphqlID(gid *graphql.ID) (*IDMarshaller, error) {
-	if gid == nil {
-		return nil, errors.New("empty ID")
-	}
-	sDec, err := base64.StdEncoding.DecodeString(string(*gid))
+func ParseGraphqlID(gid graphql.ID) (*IDMarshaller, error) {
+	sDec, err := base64.StdEncoding.DecodeString(string(gid))
 	if err != nil {
 		return nil, errors.New("invalid ID")
 	}
@@ -52,11 +78,13 @@ func ParseGraphqlID(gid *graphql.ID) (*IDMarshaller, error) {
 	}, nil
 }
 
-func (id *IDMarshaller) ToGraphqlID() *graphql.ID {
-	encoded := base64.StdEncoding.EncodeToString(
+func (id *IDMarshaller) String() string {
+	return base64.StdEncoding.EncodeToString(
 		[]byte(id.Type + ":" + id.ID),
 	)
-	gid := graphql.ID(encoded)
-	return &gid
+}
+
+func (id *IDMarshaller) ToGraphqlID() graphql.ID {
+	return graphql.ID(id.String())
 }
 `

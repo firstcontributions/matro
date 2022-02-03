@@ -106,7 +106,7 @@ func (f *Field) GoName(allExported ...bool) string {
 		return "Id"
 	}
 	if !exported && f.IsJoinedData {
-		return f.Name
+		return utils.ToCamelCase(f.Name)
 	}
 	return utils.ToTitleCase(f.Name)
 }
@@ -114,13 +114,12 @@ func (f *Field) GoName(allExported ...bool) string {
 // GoType return the gotype to be used in go code
 func (f *Field) GoType(graphqlEnabled ...bool) string {
 	if f.IsJoinedData {
-		return "*string"
+		return "string"
 	}
 	t := GetGoType(f.Type)
 	if len(graphqlEnabled) > 0 && graphqlEnabled[0] {
 		t = GetGoGraphQLType(f.Type)
 	}
-	t = "*" + t
 	if f.IsList {
 		t = "[]" + t
 	}
@@ -130,14 +129,15 @@ func (f *Field) GoType(graphqlEnabled ...bool) string {
 // GraphQLFormattedName returns the formatted graphql name for the field
 // if it is queiriable it formats like field(args...):Type!
 func (f *Field) GraphQLFormattedName() string {
+	name := utils.ToCamelCase(f.Name)
 	if !f.IsQuery {
-		return f.Name
+		return name
 	}
 	args := []string{}
 	for _, a := range f.Args {
-		args = append(args, fmt.Sprintf("%s: %s", a.Name, GetGraphQLType(&a)))
+		args = append(args, fmt.Sprintf("%s: %s", utils.ToCamelCase(a.Name), GetGraphQLType(&a)))
 	}
-	return fmt.Sprintf("%s(%s)", f.Name, strings.Join(args, ", "))
+	return fmt.Sprintf("%s(%s)", name, strings.Join(args, ", "))
 }
 
 // GraphQLFortmattedType return the graphql type name
@@ -201,6 +201,19 @@ func NewCompositeType(d *parser.Definition, typeDef *parser.Type) *CompositeType
 		Filters:         typeDef.Meta.Filters,
 		MutatableFields: typeDef.Meta.MutatableFields,
 	}
+}
+
+func (c *CompositeType) Queries() []Query {
+	queries := []Query{}
+	for _, f := range c.Fields {
+		if f.IsQuery {
+			queries = append(queries, Query{
+				Field:  f,
+				Parent: c,
+			})
+		}
+	}
+	return queries
 }
 
 // Mutatable will say this type is mutatable for not

@@ -36,7 +36,7 @@ var goTypeMap = map[string]string{
 	parser.ID:     "string",
 	parser.String: "string",
 	parser.Time:   "time.Time",
-	parser.Int:    "int32",
+	parser.Int:    "int64",
 	parser.Float:  "float64",
 	parser.Bool:   "bool",
 }
@@ -47,7 +47,7 @@ var grpcTypeMap = map[string]string{
 	parser.ID:     "string",
 	parser.String: "string",
 	parser.Time:   "google.protobuf.Timestamp",
-	parser.Int:    "int32",
+	parser.Int:    "int64",
 	parser.Float:  "float64",
 	parser.Bool:   "bool",
 }
@@ -66,12 +66,17 @@ func GetGraphQLType(t *Field) string {
 	return ts
 }
 
+func IsCompositeType(t string) bool {
+	_, ok := goTypeMap[t]
+	return !ok
+}
+
 // GetGoType returns go type from matro type
 func GetGoType(t string) string {
 	if s, ok := goTypeMap[t]; ok {
 		return s
 	}
-	return utils.ToTitleCase(t)
+	return "*" + utils.ToTitleCase(t)
 }
 
 // GetGoGraphQLType returns graphql go implementation
@@ -80,7 +85,7 @@ func GetGoGraphQLType(t string) string {
 	if s, ok := goGraphQLTypeMap[t]; ok {
 		return s
 	}
-	return utils.ToTitleCase(t)
+	return "*" + utils.ToTitleCase(t)
 }
 
 // GetGRPCType protobuf type from matro type

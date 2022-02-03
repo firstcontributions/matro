@@ -17,12 +17,14 @@ type TypeDefs struct {
 func NewTypeDefs(path string, d *parser.Definition) *TypeDefs {
 	types := []*CompositeType{}
 	edges := utils.NewSet()
+	queries := getQueries(d)
+
 	for _, def := range d.DataSchema {
 		t := NewCompositeType(d, def)
 		edges.Union(t.EdgeFields())
 		types = append(types, t)
+		queries = append(queries, t.Queries()...)
 	}
-	queries := getQueries(d)
 	for _, q := range queries {
 		edges.Add(q.Type)
 	}
