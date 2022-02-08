@@ -12,7 +12,7 @@ import (
 // Generator implements mongo model code generator
 type Generator struct {
 	*types.TypeDefs
-	modules map[string]Module
+	Modules map[string]Module
 	Path    string
 	Repo    string
 }
@@ -38,7 +38,7 @@ func NewGenerator(path string, d *parser.Definition) *Generator {
 	}
 	return &Generator{
 		TypeDefs: td,
-		modules:  mods,
+		Modules:  mods,
 		Path:     path,
 		Repo:     d.Repo,
 	}
@@ -53,7 +53,7 @@ func (g *Generator) Generate(ctx context.Context) error {
 	if err := g.generateUtilsPkg(ctx); err != nil {
 		return err
 	}
-	for _, m := range g.modules {
+	for _, m := range g.Modules {
 		if err := g.generateMongoStore(ctx, m); err != nil {
 			return err
 		}
@@ -71,7 +71,17 @@ func (g *Generator) Generate(ctx context.Context) error {
 			}
 		}
 	}
-	return nil
+	return g.generateStoreManage(ctx)
+}
+
+func (g *Generator) generateStoreManage(ctx context.Context) error {
+	return writer.CompileAndWrite(
+		ctx,
+		fmt.Sprintf("%s/internal/storemanager/", g.Path),
+		"storemanager.go",
+		storeManagerTmpl,
+		g,
+	)
 }
 
 func (g *Generator) generateCursorPkg(ctx context.Context) error {

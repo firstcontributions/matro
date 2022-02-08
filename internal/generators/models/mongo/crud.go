@@ -9,14 +9,17 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"github.com/gokultp/go-mongoqb"
 	"{{- .Repo -}}/internal/models/{{- .Module -}}store"
-
-
 )
 
 func (s *{{- title .Module -}}Store) Create{{- title .Name -}} (ctx context.Context, {{.Name}} *{{-  .Module -}}store. {{- title .Name}}) (* {{ .Module -}}store. {{- title .Name}}, error) {
 	now := time.Now()
 	{{.Name -}}.TimeCreated = now
 	{{.Name -}}.TimeUpdated = now
+	uuid, err := uuid.NewUUID()
+	if err != nil {
+		return nil, err
+	}
+	{{.Name -}}.Id = uuid.String()
 	if _, err := s.getCollection(Collection{{title (plural .Name)}}).InsertOne(ctx, {{.Name}}); err != nil {
 		return nil, err
 	}
@@ -77,42 +80,62 @@ func (s *{{- title .Module -}}Store) Get{{- title (plural .Name) -}} (
 	{{- end}}
 	
 	limit, order, cursorStr := utils.GetLimitAndSortOrderAndCursor(first, last, after, before)
+	var c *cursor.Cursor
 	if cursorStr != nil {
-		c := cursor.FromString(*cursorStr)
+		c = cursor.FromString(*cursorStr)
 		if c != nil {
 			if order == 1 {
-				qb.Lt("time_created", c.TimeStamp)
-				qb.Lt("_id", c.ID)
+				qb.Lte("time_created", c.TimeStamp)
+				qb.Lte("_id", c.ID)
 			} else {
-				qb.Gt("time_created", c.TimeStamp)
-				qb.Gt("_id", c.ID)
+				qb.Gte("time_created", c.TimeStamp)
+				qb.Gte("_id", c.ID)
 			}
 		}
 	}
 	sortOrder := utils.GetSortOrder(order)
-
+	// incrementing limit by 2 to check if next, prev elements are present
+	limit += 2
 	options := &options.FindOptions{
 		Limit: &limit,
 		Sort:  sortOrder,
 	}
 
 	var firstCursor, lastCursor string
+	var hasNextPage, hasPreviousPage bool
 
 	var {{plural .Name}} []*{{ .Module -}}store. {{- title .Name}}
 	mongoCursor, err := s.getCollection(Collection{{title (plural .Name)}}).Find(ctx, qb.Build(), options)
 	if  err != nil {
-		return nil, false, false, firstCursor, lastCursor, err
+		return nil, hasNextPage, hasPreviousPage, firstCursor, lastCursor, err
 	}
 	err = mongoCursor.All(ctx, &{{- plural .Name}})
 	if err != nil {
-		return nil, false, false, firstCursor, lastCursor, err
+		return nil, hasNextPage, hasPreviousPage, firstCursor, lastCursor, err
 	}
 	count := len({{ plural .Name}})
+	if count == 0 {
+		return {{ plural .Name}}, hasNextPage, hasPreviousPage, firstCursor, lastCursor, nil
+	}
+
+	// check if the cursor element present, if yes that can be a prev elem
+	if c != nil && {{ plural .Name -}}[0].Id == c.ID {
+		hasPreviousPage = true
+		{{ plural .Name }} = {{ plural .Name -}}[1:]
+		count--
+	}
+
+	// check if actual limit +1 elements are there, if yes trim it to limit
+	if count >= int(limit)-1 {
+		hasNextPage = true
+		{{ plural .Name }} = {{ plural .Name -}}[:limit-2]
+		count = len({{ plural .Name }})
+	}
+
 	if  count > 0 {
 		firstCursor = cursor.NewCursor({{ plural .Name -}}[0].Id, {{ plural .Name -}}[0].TimeCreated).String()
 		lastCursor = cursor.NewCursor({{ plural .Name -}}[count-1].Id, {{ plural .Name -}}[count-1].TimeCreated).String()
 	}
-	hasNextPage, hasPreviousPage := utils.CheckHasNextPrevPages(count, int(limit), order)
 	return {{ plural .Name}}, hasNextPage, hasPreviousPage, firstCursor, lastCursor, nil
 }
 {{- if .Mutatable}}

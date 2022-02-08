@@ -45,6 +45,9 @@ func NewGenerator(path string, d *parser.Definition) *Generator {
 // Generate generates gRPC prtobuf code for all given modules(services)
 func (g *Generator) Generate(ctx context.Context) error {
 	for _, m := range g.modules {
+		if m.DataSource != "grpc" {
+			continue
+		}
 		if err := g.generateProtoForModule(ctx, m, tmpl); err != nil {
 			return err
 		}

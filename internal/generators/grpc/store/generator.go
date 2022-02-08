@@ -48,6 +48,9 @@ func NewGenerator(path string, d *parser.Definition) *Generator {
 // data schema, crud operations for all the types in all given modules
 func (g *Generator) Generate(ctx context.Context) error {
 	for _, m := range g.modules {
+		if m.DataSource != "grpc" {
+			continue
+		}
 		if err := g.generateGRPCStore(ctx, m); err != nil {
 			return err
 		}
