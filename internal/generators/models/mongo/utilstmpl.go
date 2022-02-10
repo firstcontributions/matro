@@ -21,20 +21,11 @@ func GetLimitAndSortOrderAndCursor(first, last *int64, after, before *string) (i
 	return *last, -1, before
 }
 
-func CheckHasNextPrevPages(count, limit, order int) (bool, bool) {
-	if count < limit {
-		return false, false
-	}
-	if order == 1 {
-		return true, false
-	}
-	return false, true
-}
-
-func GetSortOrder(order int) map[string]int {
+func GetSortOrder(order int) bson.D {
 	order = order * defaultOrder
-	return map[string]int{
-		"time_created": order,
-		"_id":          order,
+	return bson.D{
+		{"time_created", order},
+		{"_id", order},
 	}
-}`
+}
+`

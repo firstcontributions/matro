@@ -5,16 +5,14 @@ package schema
 
 type {{title .Query.Name -}}Input struct {
 	{{- range .Query.Args}}
-	{{.GoName true}} *{{.GoType}}
+	{{.GoName true}} *{{.GoType true}}
 	{{- end}}
 }
 {{- if .Query.Parent }}
 func (n *{{- title .Query.Parent.Name -}}) {{title .Query.Name}}(ctx context.Context, in *{{title .Query.Name -}}Input) (*{{.ReturnType.ConnectionName}}, error) {
-	store := ctx.Value("store").(*Store)
+	store := storemanager.FromContext(ctx)
 {{- else }}
 func (r *Resolver) {{title .Query.Name}}(ctx context.Context, in *{{title .Query.Name -}}Input) (*{{.ReturnType.ConnectionName}}, error) {
-	store := r.Store
-	ctx = context.WithValue(ctx, "store", store)
 {{- end}}
 	var first, last *int64
 	if in.First != nil {
@@ -25,7 +23,7 @@ func (r *Resolver) {{title .Query.Name}}(ctx context.Context, in *{{title .Query
 		tmp := int64(*in.Last)
 		last = &tmp
 	}
-	data, hasNextPage, hasPreviousPage, firstCursor, lastCursor, err :=  store.{{- .ReturnType.Module -}}Store.Get{{- plural (title .ReturnType.Name)}} (
+	data, hasNextPage, hasPreviousPage, firstCursor, lastCursor, err :=  store.{{- title .ReturnType.Module -}}Store.Get{{- plural (title .ReturnType.Name)}} (
 		ctx,
 		{{- template "getargs" .}}
 	)

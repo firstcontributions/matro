@@ -23,6 +23,7 @@ type NodeIDInput struct {
 }
 
 func (r *Resolver) Node(ctx context.Context, in NodeIDInput) (*NodeResolver, error) {
+	store := storemanager.FromContext(ctx)
 	id, err := ParseGraphqlID(in.ID)
 	if err != nil {
 		return nil, err
@@ -31,7 +32,7 @@ func (r *Resolver) Node(ctx context.Context, in NodeIDInput) (*NodeResolver, err
 		{{- range .Types}}
 		{{- if .IsNode }}
 	case "{{- .Name -}}":
-		{{.Name}}Data, err := r.{{- .Module -}}Store.Get{{- title .Name -}}ByID(ctx, id.ID)
+		{{.Name}}Data, err := store.{{- title .Module -}}Store.Get{{- title .Name -}}ByID(ctx, id.ID)
 		if err != nil {
 			return nil, err
 		}

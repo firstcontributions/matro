@@ -4,40 +4,22 @@ var resolverTmpl = `
 package schema
 
 import (
-	{{- $g := .}}
-	{{- range .Modules }}
-	"{{- $g.Repo -}}/internal/models/{{- .Name -}}store"
+	
 	graphql "github.com/graph-gophers/graphql-go"
-	{{- end}}
+
 )
 
-type Store struct {
-	{{- range .Modules }} 
-	{{ .Name -}}Store {{ .Name -}}store.Store
-	{{- end}}
-}
 
-func NewStore(
-	{{- range .Modules }} 
-	{{ .Name -}}Store {{ .Name -}}store.Store,
-	{{- end}}
-) *Store {
-	return &Store{
-		{{- range .Modules }} 
-		{{ .Name -}}Store :{{ .Name -}}Store,
-		{{- end}}
-	}
-}
 
 type Resolver struct {
-	*Store
 }
 
 
 func (r *Resolver) Viewer(ctx context.Context) (*User, error) {
-	id := ctx.Value("user_id").(string)
+	id := session.FromContext(ctx).UserID()
+	store := storemanager.FromContext(ctx)
 
-	data, err := r.usersStore.GetUserByID(ctx, id)
+	data, err := store.UsersStore.GetUserByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
