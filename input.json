@@ -49,6 +49,10 @@
         "badge" : {
             "name": "badge",
             "type": "object",
+            "meta": {
+                "mutatable_fields" :["firstname", "lastname", "github_handle"],
+                "graphql_ops": "CRUD"
+            },
             "properties":{
                 "id": "id",
                 "display_name": "string"

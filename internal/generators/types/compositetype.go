@@ -112,17 +112,25 @@ func (f *Field) GoName(allExported ...bool) string {
 }
 
 // GoType return the gotype to be used in go code
-func (f *Field) GoType(graphqlEnabled ...bool) string {
+// args[0] graphql enabled
+// args[1] update type
+func (f *Field) GoType(args ...bool) string {
+	var t string
 	if f.IsJoinedData {
-		return "string"
+		t = "string"
+	} else {
+		t = GetGoType(f.Type)
+		if len(args) > 0 && args[0] {
+			t = GetGoGraphQLType(f.Type)
+		}
+		if f.IsList {
+			t = "[]" + t
+		}
 	}
-	t := GetGoType(f.Type)
-	if len(graphqlEnabled) > 0 && graphqlEnabled[0] {
-		t = GetGoGraphQLType(f.Type)
+	if (f.IsPrimitive || f.Type == "time") && len(args) > 1 && args[1] {
+		t = "*" + t
 	}
-	if f.IsList {
-		t = "[]" + t
-	}
+
 	return t
 }
 
