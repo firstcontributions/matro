@@ -136,6 +136,10 @@ func (s *{{- title .Module -}}Store) Get{{- title (plural .Name) -}} (
 		firstCursor = cursor.NewCursor({{ plural .Name -}}[0].Id, {{ plural .Name -}}[0].TimeCreated).String()
 		lastCursor = cursor.NewCursor({{ plural .Name -}}[count-1].Id, {{ plural .Name -}}[count-1].TimeCreated).String()
 	}
+	if order < 0 {
+		hasNextPage, hasPreviousPage = hasPreviousPage, hasNextPage
+		firstCursor, lastCursor = lastCursor, firstCursor
+	}
 	return {{ plural .Name}}, hasNextPage, hasPreviousPage, firstCursor, lastCursor, nil
 }
 {{- if .Mutatable}}
