@@ -142,7 +142,6 @@ func (s *{{- title .Module -}}Store) Get{{- title (plural .Name) -}} (
 	}
 	return {{ plural .Name}}, hasNextPage, hasPreviousPage, firstCursor, lastCursor, nil
 }
-{{- if .Mutatable}}
 func (s *{{- title .Module -}}Store) Update{{- title .Name -}} (ctx context.Context, id string, {{.Name -}}Update *{{-  .Module -}}store. {{- title .Name -}}Update) (error) {
 	qb := mongoqb.NewQueryBuilder().
 			Eq("_id", id)
@@ -162,7 +161,7 @@ func (s *{{- title .Module -}}Store) Update{{- title .Name -}} (ctx context.Cont
 	}
 	return nil
 }
-{{- end}}
+
 func (s *{{- title .Module -}}Store) Delete{{- title .Name -}}ByID (ctx context.Context, id string) (error) {
 	qb := mongoqb.NewQueryBuilder().
 			Eq("_id", id)

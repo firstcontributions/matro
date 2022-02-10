@@ -69,11 +69,10 @@ func  ({{ .Name }} *{{title .Name}}) FromProto(proto{{- title .Name }} *proto.{{
 }
 {{- end}}
 
-{{- if .Mutatable}}
 type {{title .Name -}}Update struct {
 	{{- range .Fields}}
 	{{- if  .IsMutatable }}
-	{{ .GoName true}}  *{{ .GoType }}` + "`bson:\"{{- .Name}}\"`" + `  
+	{{ .GoName true}}  {{ .GoType false true}}` + "`bson:\"{{- .Name}},omitempty\"`" + `  
 	{{- end}}
 	{{- end}}
 }
@@ -95,6 +94,5 @@ func ({{ .Name }} *{{title .Name -}}Update) ToProto() *proto.{{- title .Name -}}
 	{{- end}}
 	return p
 }
-{{- end}}
 {{- end}}
 `

@@ -9,19 +9,17 @@ type Store interface {
 	{{- range .Types}}
 	{{- if .IsNode }}
 	// {{ .Name }} methods
-	Create{{- title .Name -}} (context.Context,  *{{- title .Name}}) (*{{- title .Name}}, error)
-	Get{{- title .Name -}}ByID (context.Context, string) (*{{- title .Name}}, error)
-	Get{{- title (plural .Name) -}} (context.Context, []string,
+	Create{{- title .Name -}} (ctx context.Context, {{ .Name}}  *{{- title .Name}}) (*{{- title .Name}}, error)
+	Get{{- title .Name -}}ByID (ctx context.Context, id string) (*{{- title .Name}}, error)
+	Get{{- title (plural .Name) -}} (ctx context.Context, ids []string,
 		{{- if not (empty .SearchFields) -}}
-		*string,
+		search *string,
 		{{- end -}}
 		{{- template "getargs" . -}}
-		*string, *string,  *int64,  *int64) ([]* {{- title .Name}}, bool, bool,string, string, error) 
+		after *string, before *string, first *int64, last *int64) ([]* {{- title .Name}}, bool, bool,string, string, error) 
 
-	{{- if .Mutatable}}
-	Update{{- title .Name -}} (context.Context, string, *{{- title .Name -}}Update) (error) 
-	{{- end}}
-	Delete{{- title .Name -}}ByID (context.Context, string) (error)
+	Update{{- title .Name -}} (ctx context.Context, id string, update *{{- title .Name -}}Update) (error) 
+	Delete{{- title .Name -}}ByID (ctx context.Context, id string) (error)
 	{{- end}}
 	{{- end}}
 }
@@ -30,10 +28,10 @@ type Store interface {
 {{- define "getargs" -}}
 {{- $t := . -}}
 {{- range .Filters -}}
-	*{{$t.FieldType . -}},
+	{{ . }} *{{$t.FieldType . -}},
 {{- end -}}
 {{- range .ReferedFields -}}
-	*string,
+	{{.}} *string,
 {{- end -}}
 {{- end -}}
 `

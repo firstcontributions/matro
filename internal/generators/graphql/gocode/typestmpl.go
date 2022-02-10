@@ -41,6 +41,9 @@ type {{ title .Name}} struct {
 
 {{- define "constructor" }}
 func New {{- title .Name}} (m *{{.Module -}}store.{{-  title .Name}}) *{{- title .Name}} {
+	if m == nil {
+		return nil
+	}
 	return &{{- title .Name}} {
 		{{- range .Fields}}
 		{{- if  (not (and .IsJoinedData  .IsList))}}
