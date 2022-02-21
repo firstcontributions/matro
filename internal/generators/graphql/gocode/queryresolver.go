@@ -3,14 +3,19 @@ package gocode
 var queryResolverTmpl = `
 package schema
 
+{{- if (ne (len .Query.Args) 0)}}
 type {{title .Query.Name -}}Input struct {
+	{{- $q := .Query}}
 	{{- range .Query.Args}}
+	{{- if (not (isHardCodedFilter $q.HardcodedFilters .Name))}}
 	{{.GoName true}} *{{.GoType true}}
 	{{- end}}
+	{{- end}}
 }
+{{- end}}
+{{- if .Query.IsPaginated }}
 {{- if .Query.Parent }}
 func (n *{{- title .Query.Parent.Name -}}) {{title .Query.Name}}(ctx context.Context, in *{{title .Query.Name -}}Input) (*{{.ReturnType.ConnectionName}}, error) {
-	store := storemanager.FromContext(ctx)
 {{- else }}
 func (r *Resolver) {{title .Query.Name}}(ctx context.Context, in *{{title .Query.Name -}}Input) (*{{.ReturnType.ConnectionName}}, error) {
 {{- end}}
@@ -23,7 +28,14 @@ func (r *Resolver) {{title .Query.Name}}(ctx context.Context, in *{{title .Query
 		tmp := int64(*in.Last)
 		last = &tmp
 	}
-	data, hasNextPage, hasPreviousPage, firstCursor, lastCursor, err :=  store.{{- title .ReturnType.Module -}}Store.Get{{- plural (title .ReturnType.Name)}} (
+	store := storemanager.FromContext(ctx)
+	{{- $q := .Query}}
+	{{- range .Query.Args}}
+		{{- if (isHardCodedFilter $q.HardcodedFilters .Name)}}
+	{{camel .Name}} :=  {{ getHardcodedValue $q.HardcodedFilters .Name .Type}}
+		{{- end}}
+	{{- end}}
+	data, hasNextPage, hasPreviousPage, firstCursor, lastCursor, err :=  store.{{- title .ReturnType.Module.Name -}}Store.Get{{- plural (title .ReturnType.Name)}} (
 		ctx,
 		{{- template "getargs" .}}
 	)
@@ -32,7 +44,15 @@ func (r *Resolver) {{title .Query.Name}}(ctx context.Context, in *{{title .Query
 	}
 	return New{{- .ReturnType.ConnectionName}}(data, hasNextPage, hasPreviousPage, &firstCursor, &lastCursor), nil
 }
-
+{{- else}} 
+{{- if .Query.Parent }}
+func (n *{{- title .Query.Parent.Name -}}) {{title .Query.Name}}(ctx context.Context{{- if (ne (len .Query.Args) 0)}}, in *{{title .Query.Name -}}Input {{- end}}) (*{{- title .ReturnType.Name}}, error) {
+{{- else }}
+func (r *Resolver) {{title .Query.Name}}(ctx context.Context, {{- if (ne (len .Query.Args) 0)}}, in *{{title .Query.Name -}}Input {{- end}}) (*{{- title .ReturnType.Name }}, error) {
+{{- end}}
+	return New{{- title .ReturnType.Name }}(), nil
+}
+{{- end}}
 
 {{- define "getargs"}}
 {{- $q := .Query}}
@@ -47,11 +67,14 @@ func (r *Resolver) {{title .Query.Name}}(ctx context.Context, in *{{title .Query
 {{- range .ReturnType.ReferedFields }}
 		&n.Id,
 {{- end }}
-{{- range .ReturnType.Filters}}
-	{{- if (isElemOfStrArray ($q.ArgNames) .)}}
-		in.{{- title .}},
-	{{- else}}
-		nil,
+{{- $t := .}}
+{{- range $q.Args}}
+	{{- if (isElemOfStrArray ($t.ReturnType.Filters) .Name)}}
+		{{- if (isHardCodedFilter $q.HardcodedFilters .Name)}}
+		&{{- camel .Name}},
+		{{- else}}
+		in.{{- title .Name}},
+		{{- end}}
 	{{- end}}
 {{- end}}
 	in.After,

@@ -37,6 +37,11 @@ func (g *Generator) Generate(ctx context.Context) error {
 			return err
 		}
 	}
+	for _, t := range g.QueryTypes {
+		if err := g.generateTypeResolver(ctx, t); err != nil {
+			return err
+		}
+	}
 	for _, q := range g.Queries {
 		if err := g.generateQueryResolver(ctx, q); err != nil {
 			return err
@@ -91,6 +96,19 @@ func (g *Generator) generateRootResolver(ctx context.Context) error {
 
 // generateQueryResolver generate root query resolver
 func (g *Generator) generateQueryResolver(ctx context.Context, q types.Query) error {
+	var returnType *types.CompositeType
+
+	typeName := q.Type
+	if q.Type == "object" {
+		typeName = q.Name
+	}
+	if t, ok := g.Types[typeName]; ok {
+		returnType = t
+	} else if t, ok := g.QueryTypes[typeName]; ok {
+		returnType = t
+	} else {
+		return fmt.Errorf("could not find type defenition for type [%s]", typeName)
+	}
 	return writer.CompileAndWrite(
 		ctx,
 		g.Path,
@@ -101,7 +119,7 @@ func (g *Generator) generateQueryResolver(ctx context.Context, q types.Query) er
 			ReturnType *types.CompositeType
 		}{
 			Query:      q,
-			ReturnType: g.Types[q.Type],
+			ReturnType: returnType,
 		},
 	)
 }

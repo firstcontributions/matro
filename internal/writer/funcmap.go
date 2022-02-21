@@ -28,5 +28,16 @@ func FuncMap() template.FuncMap {
 			return m[t]
 		},
 		"isCompositeType": types.IsCompositeType,
+		"isHardCodedFilter": func(hardcodedFilters map[string]string, filter string) bool {
+			_, ok := hardcodedFilters[filter]
+			return ok
+		},
+		"getHardcodedValue": func(hardcodedFilters map[string]string, filter, typ string) string {
+			val := hardcodedFilters[filter]
+			if types.IsCompositeType(typ) || typ == "string" {
+				return "\"" + val + "\""
+			}
+			return val
+		},
 	}
 }

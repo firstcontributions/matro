@@ -7,7 +7,7 @@ import (
 	"context"
 
 	graphql "github.com/graph-gophers/graphql-go"
-	"{{- .Repo -}}/internal/models/{{- .Module -}}store"
+	"{{- .Repo -}}/internal/models/{{- .Module.Name -}}store"
 )
 
 
@@ -40,10 +40,14 @@ type {{ title .Name}} struct {
 {{- end}}
 
 {{- define "constructor" }}
-func New {{- title .Name}} (m *{{.Module -}}store.{{-  title .Name}}) *{{- title .Name}} {
+{{- if .AllReferedFields}}
+func New {{- title .Name}} () *{{- title .Name}} {
+{{- else}}
+func New {{- title .Name}} (m *{{.Module.Name -}}store.{{-  title .Name}}) *{{- title .Name}} {
 	if m == nil {
 		return nil
 	}
+{{- end}}
 	return &{{- title .Name}} {
 		{{- range .Fields}}
 		{{- if  (not (and .IsJoinedData  .IsList))}}
@@ -81,7 +85,7 @@ func (n *{{ title .Name}}) ID(ctx context.Context) graphql.ID {
 func (n *{{ title $t.Name}}) {{title .GoName}} (ctx context.Context) (*{{- title $returntype.Name}}, error) {
 	store := ctx.Value("store").(*Store)
 
-	data, err := store.{{- plural $returntype.Module }}Store.Get{{- title $returntype.Name -}}ByID(ctx, n.{{- .GoName}})
+	data, err := store.{{- plural $returntype.Module.Name }}Store.Get{{- title $returntype.Name -}}ByID(ctx, n.{{- .GoName}})
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +104,7 @@ type {{.ConnectionName}} struct {
 
 
 func New{{.ConnectionName}}(
-	data []*{{- .Module -}}store.{{- title .Name}},
+	data []*{{- .Module.Name -}}store.{{- title .Name}},
 	hasNextPage bool,
 	hasPreviousPage bool,
 	firstCursor *string, 
@@ -112,7 +116,11 @@ func New{{.ConnectionName}}(
 
 		edges = append(edges, &{{- .EdgeName}}{
 			Node : node,
+			{{- if (eq .Module.DB "")}}
+			Cursor: d.Cursor,
+			{{- else}}
 			Cursor: cursor.NewCursor(d.Id, d.TimeCreated).String(),
+			{{- end}}
 		})
 	}
 	return &{{.ConnectionName}} {

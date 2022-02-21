@@ -1,6 +1,8 @@
 package types
 
-import "github.com/firstcontributions/matro/internal/parser"
+import (
+	"github.com/firstcontributions/matro/internal/parser"
+)
 
 // Query encapsulates a graphql query metadata
 type Query struct {
@@ -8,14 +10,20 @@ type Query struct {
 	Parent *CompositeType
 }
 
-func getQueries(d *parser.Definition) []Query {
+func getQueries(d *parser.Definition, typesMap map[string]*parser.Type, queryModule parser.Module) ([]Query, map[string]*CompositeType) {
 	queries := []Query{}
+	graphQLOnlyTypes := map[string]*CompositeType{}
 	for _, q := range d.Queries {
-		field := NewField(d, q, q.Name)
+		if q.Schema == "" {
+			t := NewCompositeType(typesMap, q, queryModule)
+			graphQLOnlyTypes[t.Name] = t
+			queries = append(queries, t.Queries()...)
+		}
+		field := NewField(typesMap, q, q.Name)
 		field.IsQuery = true
 		queries = append(queries, Query{
 			Field: field,
 		})
 	}
-	return queries
+	return queries, graphQLOnlyTypes
 }
