@@ -54,20 +54,32 @@ func (g *Generator) Generate(ctx context.Context) error {
 		return err
 	}
 	for _, m := range g.Modules {
-		if err := g.generateMongoStore(ctx, m); err != nil {
-			return err
-		}
 		if err := g.generateStore(ctx, m); err != nil {
 			return err
 		}
 		for _, t := range m.Types {
+			if t.AllReferedFields {
+				continue
+			}
+			if err := g.generateModelTypes(ctx, m, t); err != nil {
+				return err
+			}
+		}
+		if m.DB == "" {
+			// if there is no DB information, not needed to generate mongo related
+			continue
+		}
+		if err := g.generateMongoStore(ctx, m); err != nil {
+			return err
+		}
+		for _, t := range m.Types {
+			if t.AllReferedFields {
+				continue
+			}
 			if t.IsNode {
 				if err := g.generateModel(ctx, m.Name, t); err != nil {
 					return err
 				}
-			}
-			if err := g.generateModelTypes(ctx, m, t); err != nil {
-				return err
 			}
 		}
 	}
@@ -159,11 +171,11 @@ func (g *Generator) generateModelTypes(ctx context.Context, module Module, typ *
 		typ.Name+".go",
 		modelTyp,
 		struct {
-			Module string
+			Module Module
 			*types.CompositeType
 			HaveProto bool
 		}{
-			Module:        module.Name,
+			Module:        module,
 			CompositeType: typ,
 			HaveProto:     module.DataSource == "grpc",
 		},

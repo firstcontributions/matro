@@ -7,17 +7,14 @@ import (
 
 // Definition encapsulates the input schema definiton
 type Definition struct {
-	DataSchema map[string]*Type `json:"data_schema"`
-	Modules    []Module         `json:"modules"`
-	Repo       string           `json:"repo"`
-	Queries    []*Type          `json:"high_level_queries"`
+	Modules []Module `json:"modules"`
+	Repo    string   `json:"repo"`
+	Queries []*Type  `json:"high_level_queries"`
 }
 
 // NewDefinition return an instance of Definition
 func NewDefinition() *Definition {
-	return &Definition{
-		DataSchema: map[string]*Type{},
-	}
+	return &Definition{}
 }
 
 // ParseFromFile parses the definitions from the given json file

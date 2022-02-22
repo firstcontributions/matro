@@ -83,7 +83,7 @@ func (*Generator) generateGRPCService(protoPath string) error {
 		"--go_out=plugins=grpc:.",
 		protoPath,
 	).Output(); err != nil {
-		fmt.Println("grpc ", string(res))
+		fmt.Println("grpc ", string(res), err)
 		return err
 	}
 	return nil

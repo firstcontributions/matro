@@ -32,7 +32,7 @@ func (r *Resolver) Node(ctx context.Context, in NodeIDInput) (*NodeResolver, err
 		{{- range .Types}}
 		{{- if .IsNode }}
 	case "{{- .Name -}}":
-		{{.Name}}Data, err := store.{{- title .Module -}}Store.Get{{- title .Name -}}ByID(ctx, id.ID)
+		{{.Name}}Data, err := store.{{- title .Module.Name -}}Store.Get{{- title .Name -}}ByID(ctx, id.ID)
 		if err != nil {
 			return nil, err
 		}

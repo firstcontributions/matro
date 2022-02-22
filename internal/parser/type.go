@@ -69,13 +69,14 @@ func (m *Ops) UnmarshalJSON(data []byte) error {
 
 // Type encapsulates the type definition meta data
 type Type struct {
-	Name       string           `json:"name"`
-	Type       string           `json:"type"`
-	Paginated  bool             `json:"paginated"`
-	Schema     string           `json:"schema"`
-	JoinedData bool             `json:"joined_data"`
-	Properties map[string]*Type `json:"properties"`
-	Meta       Meta
+	Name             string            `json:"name"`
+	Type             string            `json:"type"`
+	Paginated        bool              `json:"paginated"`
+	Schema           string            `json:"schema"`
+	JoinedData       bool              `json:"joined_data"`
+	Properties       map[string]*Type  `json:"properties"`
+	Meta             Meta              `json:"meta"`
+	HardcodedFilters map[string]string `json:"hardcoded_filters"`
 }
 
 // validateTypeAndGetFirstNonEmptyIdx validates the given type string binary
@@ -106,8 +107,8 @@ func (t *Type) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	if b[i] != '{' {
-		// this should be a string if not in the form of an obejct leteral
-		// remove all the double quotes (data could be in the format "int")
+		// this should be a string if not in the form of an obejct literal
+		// remove all the double quotes (data could be in the format "string")
 		t.Type = strings.ReplaceAll(string(b), "\"", "")
 		return nil
 	}
@@ -117,13 +118,14 @@ func (t *Type) UnmarshalJSON(b []byte) error {
 
 	// declaring var data with inline struct type
 	data := struct {
-		Name       string           `json:"name"`
-		Type       string           `json:"type"`
-		Paginated  bool             `json:"paginated"`
-		Schema     string           `json:"schema"`
-		JoinedData bool             `json:"joined_data"`
-		Properties map[string]*Type `json:"properties"`
-		Meta       Meta             `json:"meta"`
+		Name             string            `json:"name"`
+		Type             string            `json:"type"`
+		Paginated        bool              `json:"paginated"`
+		Schema           string            `json:"schema"`
+		JoinedData       bool              `json:"joined_data"`
+		Properties       map[string]*Type  `json:"properties"`
+		Meta             Meta              `json:"meta"`
+		HardcodedFilters map[string]string `json:"hardcoded_filters"`
 	}{}
 	if err := json.Unmarshal(b, &data); err != nil {
 		return err
@@ -135,6 +137,13 @@ func (t *Type) UnmarshalJSON(b []byte) error {
 	t.Properties = data.Properties
 	t.Name = data.Name
 	t.Meta = data.Meta
+	t.HardcodedFilters = data.HardcodedFilters
+
+	for name, p := range data.Properties {
+		if p.Name == "" {
+			p.Name = name
+		}
+	}
 	return nil
 }
 

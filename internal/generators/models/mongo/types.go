@@ -1,7 +1,7 @@
 package mongo
 
 const modelTyp = `
-package {{ .Module -}}store
+package {{ .Module.Name -}}store
 
 type {{title .Name}} struct {
 	{{- range .ReferedFields}}
@@ -15,6 +15,9 @@ type {{title .Name}} struct {
 	{{ .GoName true}}  {{ .GoType }}` + "`bson:\"{{- .Name}},omitempty\"`" + `  
 	{{- end}}
 	{{- end}}
+	{{- end}}
+	{{- if (eq .Module.DB "")}}
+	Cursor string
 	{{- end}}
 }
 
@@ -69,6 +72,7 @@ func  ({{ .Name }} *{{title .Name}}) FromProto(proto{{- title .Name }} *proto.{{
 }
 {{- end}}
 
+{{- if (ne .Module.DB "")}}
 type {{title .Name -}}Update struct {
 	{{- range .Fields}}
 	{{- if  .IsMutatable }}
@@ -94,5 +98,6 @@ func ({{ .Name }} *{{title .Name -}}Update) ToProto() *proto.{{- title .Name -}}
 	{{- end}}
 	return p
 }
+{{- end}}
 {{- end}}
 `

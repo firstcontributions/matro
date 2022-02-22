@@ -40,6 +40,14 @@ type PageInfo {
 	{{- end}}
 {{- end}}
 
+{{- range .QueryTypes}}
+	{{- template "typeDef" .}}
+	{{- if .IsEdge}}
+	{{- template "connectionDef" .}}
+	{{- template "edgeDef" .}}
+	{{- end}}
+{{- end}}
+
 
 
 {{- define "field"}}

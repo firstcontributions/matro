@@ -2,7 +2,6 @@ package writer
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/firstcontributions/matro/internal/ctxkeys"
@@ -53,7 +52,7 @@ func CompileAndWrite(
 	data interface{},
 ) error {
 	w := GetWriter(path, filename)
-	getSpinner(ctx).Update(fmt.Sprintf("%s/%s", path, filename))
+	// getSpinner(ctx).Update(fmt.Sprintf("%s/%s", path, filename))
 	if err := w.Compile(ctx, tmpl, data); err != nil {
 		return err
 	}
@@ -61,7 +60,6 @@ func CompileAndWrite(
 		return err
 	}
 	return w.Format(ctx)
-	// return nil
 }
 func getSpinner(ctx context.Context) *spinner.Spinner {
 	return ctx.Value(ctxkeys.Spinner).(*spinner.Spinner)
