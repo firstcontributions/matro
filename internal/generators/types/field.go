@@ -139,6 +139,10 @@ func (f *Field) GraphQLFormattedName() string {
 	}
 	args := []string{}
 	for _, a := range f.Args {
+		if _, ok := f.HardcodedFilters[a.Name]; ok {
+			// no need to add hardcoded filters in graphql query args
+			continue
+		}
 		args = append(args, fmt.Sprintf("%s: %s", utils.ToCamelCase(a.Name), GetGraphQLType(&a)))
 	}
 	return fmt.Sprintf("%s(%s)", name, strings.Join(args, ", "))
