@@ -4,7 +4,7 @@
   <img src="./assets/logo.png" width="200" />
   <br/>
   <p align="center">
-    <b>Matro </b> is a fullstack code generator
+    <b>Matro </b> is a graphql code generator inspired by swagger
   </p>
   <!-- <p align="center">
     A <a href="">Firstcontributions</b> initiative
@@ -39,7 +39,22 @@
 </p>
 
 
+## Getting started
 
+### 1. Pre-requisites
+  1. Go version 17.x+
+  2. For grpc
+      1. google.golang.org/grpc v1.44.0 
+      2. google.golang.org/protobuf v1.27.1
+  3. Gnu Make
+
+### 2. How to Install
+```sh
+  $. git clone git@github.com:firstcontributions/matro.git
+  $. cd matro
+  $. make config
+  $. make build
+```
 
 ## Progress
 ---
