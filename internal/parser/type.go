@@ -149,5 +149,9 @@ func (t *Type) UnmarshalJSON(b []byte) error {
 
 // IsPrimitive says the type is primitive or not
 func (t *Type) IsPrimitive() bool {
-	return t.Type != List && t.Type != Object
+	switch t.Type {
+	case Int, Bool, Float, ID, String, Time:
+		return true
+	}
+	return false
 }

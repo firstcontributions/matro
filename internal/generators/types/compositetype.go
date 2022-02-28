@@ -10,13 +10,15 @@ import (
 
 var auditFields = []*Field{
 	{
-		Name: "time_created",
-		Type: "time",
+		Name:        "time_created",
+		Type:        "time",
+		IsPrimitive: true,
 	},
 	{
 		Name:        "time_updated",
 		Type:        "time",
 		IsMutatable: true,
+		IsPrimitive: true,
 	},
 }
 
