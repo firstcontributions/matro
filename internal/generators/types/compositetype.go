@@ -37,6 +37,7 @@ type CompositeType struct {
 	Module           *parser.Module
 	AllReferedFields bool
 	HardcodedFilters map[string]string
+	NoGraphql        bool
 }
 
 // NewCompositeType return an instance of the CompositeType
@@ -62,7 +63,6 @@ func NewCompositeType(typesMap map[string]*parser.Type, typeDef *parser.Type, mo
 	for _, mf := range typeDef.Meta.MutatableFields {
 		fields[mf].IsMutatable = true
 	}
-
 	return &CompositeType{
 		Name:             typeDef.Name,
 		Fields:           fields,
@@ -73,6 +73,7 @@ func NewCompositeType(typesMap map[string]*parser.Type, typeDef *parser.Type, mo
 		MutatableFields:  typeDef.Meta.MutatableFields,
 		Module:           &module,
 		AllReferedFields: allRefered,
+		NoGraphql:        typeDef.NoGraphql,
 	}
 }
 

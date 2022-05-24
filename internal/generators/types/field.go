@@ -23,6 +23,7 @@ type Field struct {
 	IsJoinedData     bool
 	IsMutatable      bool
 	HardcodedFilters map[string]string
+	NoGraphql        bool
 }
 
 // paginationArgs are the defualt pagination arguments should be
@@ -54,8 +55,10 @@ func NewField(typesMap map[string]*parser.Type, typeDef *parser.Type, name strin
 	}
 	if typeDef.Schema == "" {
 		f.Type = typeDef.Name
+		f.NoGraphql = typeDef.NoGraphql
 	} else {
 		f.Type = typesMap[typeDef.Schema].Name
+		f.NoGraphql = typesMap[typeDef.Schema].NoGraphql
 	}
 	if _, ok := typesMap[f.Type]; ok {
 		f.Args = getArgs(typesMap, typesMap[f.Type])
