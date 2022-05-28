@@ -55,7 +55,7 @@ func NewCompositeType(typesMap map[string]*parser.Type, typeDef *parser.Type, mo
 			allRefered = false
 		}
 	}
-	if module.DB != "" {
+	if module.DB != "" && isNode {
 		for _, f := range auditFields {
 			fields[f.Name] = f
 		}

@@ -56,6 +56,9 @@ func NewField(typesMap map[string]*parser.Type, typeDef *parser.Type, name strin
 	if typeDef.Schema == "" {
 		f.Type = typeDef.Name
 		f.NoGraphql = typeDef.NoGraphql
+	} else if !IsCompositeType(typeDef.Schema) {
+		f.Type = typeDef.Schema
+		f.NoGraphql = typeDef.NoGraphql
 	} else {
 		f.Type = typesMap[typeDef.Schema].Name
 		f.NoGraphql = typesMap[typeDef.Schema].NoGraphql
