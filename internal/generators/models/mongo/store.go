@@ -12,7 +12,9 @@ import (
 const (
 	DB{{title (plural .Name) -}} = "{{- plural .Name }}"
 	{{- range .Types }}
+	{{- if .IsNode}}
 	Collection{{title (plural .Name)}} = "{{- plural .Name }}"
+	{{- end}}
 	{{- end}}
 )
 

@@ -40,10 +40,23 @@ type Meta struct {
 
 // Ops defines the supported graphql CRUD operations
 type Ops struct {
-	Create bool
-	Read   bool
-	Update bool
-	Delete bool
+	create bool
+	read   bool
+	update bool
+	delete bool
+}
+
+func (o *Ops) Create() bool {
+	return o != nil && o.create
+}
+func (o *Ops) Update() bool {
+	return o != nil && o.update
+}
+func (o *Ops) Read() bool {
+	return o != nil && o.read
+}
+func (o *Ops) Delete() bool {
+	return o != nil && o.delete
 }
 
 // UnmarshalJSON is a custom json unmarshaller
@@ -55,13 +68,13 @@ func (m *Ops) UnmarshalJSON(data []byte) error {
 	for _, b := range data {
 		switch b {
 		case 'C':
-			m.Create = true
+			m.create = true
 		case 'R':
-			m.Read = true
+			m.read = true
 		case 'U':
-			m.Update = true
+			m.update = true
 		case 'D':
-			m.Delete = true
+			m.delete = true
 		}
 	}
 	return nil
@@ -69,6 +82,10 @@ func (m *Ops) UnmarshalJSON(data []byte) error {
 
 // Type encapsulates the type definition meta data
 type Type struct {
+	_Type
+}
+
+type _Type struct {
 	Name             string            `json:"name"`
 	Type             string            `json:"type"`
 	Paginated        bool              `json:"paginated"`
@@ -77,6 +94,7 @@ type Type struct {
 	Properties       map[string]*Type  `json:"properties"`
 	Meta             Meta              `json:"meta"`
 	HardcodedFilters map[string]string `json:"hardcoded_filters"`
+	NoGraphql        bool              `json:"no_graphql"`
 }
 
 // validateTypeAndGetFirstNonEmptyIdx validates the given type string binary
@@ -116,38 +134,17 @@ func (t *Type) UnmarshalJSON(b []byte) error {
 	// we cannot call json.Unmarshal on this struct as it will be an recursive call
 	// to the same func.
 
-	// declaring var data with inline struct type
-	data := struct {
-		Name             string            `json:"name"`
-		Type             string            `json:"type"`
-		Paginated        bool              `json:"paginated"`
-		Schema           string            `json:"schema"`
-		JoinedData       bool              `json:"joined_data"`
-		Properties       map[string]*Type  `json:"properties"`
-		Meta             Meta              `json:"meta"`
-		HardcodedFilters map[string]string `json:"hardcoded_filters"`
-	}{}
-	if err := json.Unmarshal(b, &data); err != nil {
+	if err := json.Unmarshal(b, &t._Type); err != nil {
 		return err
-	}
-	t.Type = data.Type
-	t.Paginated = data.Paginated
-	t.JoinedData = data.JoinedData
-	t.Schema = data.Schema
-	t.Properties = data.Properties
-	t.Name = data.Name
-	t.Meta = data.Meta
-	t.HardcodedFilters = data.HardcodedFilters
-
-	for name, p := range data.Properties {
-		if p.Name == "" {
-			p.Name = name
-		}
 	}
 	return nil
 }
 
 // IsPrimitive says the type is primitive or not
 func (t *Type) IsPrimitive() bool {
-	return t.Type != List && t.Type != Object
+	switch t.Type {
+	case Int, Bool, Float, ID, String, Time:
+		return true
+	}
+	return false
 }

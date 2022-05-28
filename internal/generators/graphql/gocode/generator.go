@@ -33,7 +33,13 @@ func NewGenerator(path string, d *parser.Definition) *Generator {
 // (type definitons, query resolvers, mutation executions, ...)
 func (g *Generator) Generate(ctx context.Context) error {
 	for _, t := range g.Types {
+		if t.NoGraphql {
+			continue
+		}
 		if err := g.generateTypeResolver(ctx, t); err != nil {
+			return err
+		}
+		if err := g.generateMutation(ctx, t); err != nil {
 			return err
 		}
 	}
@@ -69,6 +75,20 @@ func (g *Generator) generateTypeResolver(ctx context.Context, t *types.Composite
 			Repo:          g.Repo,
 			Types:         g.Types,
 		},
+	)
+}
+
+// generateMutation
+func (g *Generator) generateMutation(ctx context.Context, t *types.CompositeType) error {
+	if !t.IsNode || !(t.GraphqlOps.Create() || t.GraphqlOps.Update() || t.GraphqlOps.Delete()) {
+		return nil
+	}
+	return writer.CompileAndWrite(
+		ctx,
+		g.Path,
+		t.Name+"_mutations.go",
+		mutationTmpl,
+		t,
 	)
 }
 

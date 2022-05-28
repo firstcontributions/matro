@@ -3,6 +3,7 @@ package schema
 const schemaTmpl = `
 schema {
 	query: Query
+	mutation: Mutation
 }
 scalar Time
 type Query {
@@ -33,10 +34,15 @@ type PageInfo {
 }
 
 {{- range .Types}}
+	{{- if (not .NoGraphql)}}
 	{{- template "typeDef" .}}
+	{{- if (and .IsNode (or .GraphqlOps.Create .GraphqlOps.Update))}}
+	{{- template "inputType" .}}
+	{{- end}}
 	{{- if .IsEdge}}
 	{{- template "connectionDef" .}}
 	{{- template "edgeDef" .}}
+	{{- end}}
 	{{- end}}
 {{- end}}
 
@@ -48,12 +54,37 @@ type PageInfo {
 	{{- end}}
 {{- end}}
 
+type Mutation {
+	{{- range .Types }} 
+		{{- template "mutation" .}}
+	{{- end}}
+}
 
 
 {{- define "field"}}
+	{{- if (not .NoGraphql)}}
 	{{.GraphQLFormattedName}}: {{.GraphQLFortmattedType}}
+	{{- end}}
 {{- end}}
 
+{{- define "inputType"}}
+
+input Create{{- title .Name -}}Input {
+	{{- range .Fields}}
+	{{- if (not (or (isAditField .Name) .IsQuery .NoGraphql))}}
+	{{.GraphQLFormattedName}}: {{.GraphQLFortmattedType}}
+	{{- end}}
+	{{- end}}
+}
+
+input Update{{- title .Name -}}Input {
+	{{- range .Fields}}
+	{{- if (and .IsMutatable (not (or (isAditField .Name) .IsQuery .NoGraphql)))}}
+	{{.GraphQLFormattedName}}: {{.GraphQLFortmattedType}}
+	{{- end}}
+	{{- end}}
+}
+{{- end}}
 
 {{- define "typeDef"}}
 {{- if .IsNode}}
@@ -89,4 +120,9 @@ type {{.ConnectionName}} {
 {{- end}}
 
 
+{{- define "mutation" }}
+{{- if (.GraphqlOps.Create) }} 
+	create{{- title .Name}}({{.Name}}: Create{{- title .Name -}}Input!): {{title .Name}}!
+{{- end}}
+{{- end}}
 `

@@ -15,6 +15,14 @@ import (
 {{- template "constructor" .}}
 {{- template "joinDataResolvers" .}}
 
+{{- if (ne .Module.Name "queries")}}
+{{- if .IsNode}}
+{{- template "inputTypes" .}}
+{{- else}}
+{{- template "modelTypeAdatper" .}}
+{{- end}}
+{{- end}}
+
 {{- if .IsNode }}
 {{- template "nodeIDResolver" .}}
 
@@ -32,9 +40,74 @@ type {{ title .Name}} struct {
 }
 {{- end}}
 
+{{- define "inputTypes" }}
+type Create{{- title .Name -}}Input struct {
+	{{- range .Fields}}
+	{{- if (not (or (isAditField .Name) .IsQuery))}}
+	{{- template "fieldDef" .}}
+	{{- end}}
+	{{- end}}
+}
+
+func (n *Create{{- title .Name -}}Input) ToModel() *{{-  plural .Module.Name -}}store.{{- title .Name}}{
+	if n == nil {
+		return nil
+	}
+	 return &{{-  plural .Module.Name -}}store.{{- title .Name}} {
+		{{- range .Fields }}
+		{{- if (not (or (isAditField .Name) .IsQuery))}}
+			{{- template "inputTypeField" .}}
+		{{- end}}
+		{{- end}}
+	}
+}
+
+{{- if (and .IsNode .GraphqlOps.Update)}}
+type Update{{- title .Name -}}Input struct {
+	{{- range .Fields}}
+	{{- if (and .IsMutatable (not (or (isAditField .Name) .IsQuery .NoGraphql)))}}
+	{{- if  (not (and .IsJoinedData  .IsList))}}
+	{{.GoName}} {{.GoType true true}}
+	{{- end}}
+	{{- end}}
+	{{- end}}
+}
+
+func (n *Update{{- title .Name -}}Input) ToModel() *{{-  plural .Module.Name -}}store.{{- title .Name -}}Update {
+	if n == nil {
+		return nil
+	}
+	 return &{{-  plural .Module.Name -}}store.{{- title .Name -}}Update {
+		{{- range .Fields }}
+		{{- if (and .IsMutatable (not (or (isAditField .Name) .IsQuery)))}}
+			{{- template "inputTypeField" .}}
+		{{- end}}
+		{{- end}}
+	}
+}
+{{- end }}
+{{- end}}
+
+{{- define "inputTypeField" }}
+{{- if  (not (or (and .IsJoinedData  .IsList) .NoGraphql))}}
+	{{- if (and (not .IsJoinedData) (isCompositeType .Type))}}
+		{{.GoName}} :n.{{- .GoName }}.ToModel(),
+	{{- else}}
+		{{- if (eq .Type "int")}}
+			{{.GoName}} : int64(n.{{- .GoName }}), 
+		{{- else }}
+			{{- if (eq .Type "time")}}
+				{{.GoName}} : n.{{- .GoName }}.Time, 
+			{{- else}}
+				{{.GoName}} : n.{{- .GoName }}, 
+			{{- end}}
+		{{- end}}
+	{{- end}}
+{{- end}}
+{{- end}}
 
 {{- define "fieldDef" }}
-	{{- if  (not (and .IsJoinedData  .IsList))}}
+	{{- if  (not (or (and .IsJoinedData  .IsList) .NoGraphql))}}
 	{{.GoName}} {{.GoType true}}
 	{{- end}}
 {{- end}}
@@ -50,7 +123,7 @@ func New {{- title .Name}} (m *{{.Module.Name -}}store.{{-  title .Name}}) *{{- 
 {{- end}}
 	return &{{- title .Name}} {
 		{{- range .Fields}}
-		{{- if  (not (and .IsJoinedData  .IsList))}}
+		{{- if  (not (or (and .IsJoinedData  .IsList) .NoGraphql))}}
 		{{- if (and (not .IsJoinedData) (isCompositeType .Type))}}
 		{{.GoName}} : New{{- title .Type -}}(m.{{- .GoName true}}),
 		{{- else}}
@@ -137,6 +210,35 @@ func New{{.ConnectionName}}(
 type {{.EdgeName}} struct {
 	Node *{{- title .Name}}
 	Cursor string
+}
+{{- end}}
+
+
+{{- define "modelTypeAdatper" }}
+func (n *{{title .Name}}) ToModel() *{{-  plural .Module.Name -}}store.{{- title .Name}}{
+	if n == nil {
+		return nil
+	}
+	 return &{{-  plural .Module.Name -}}store.{{- title .Name}} {
+		{{- range .Fields }}
+		{{- if  (not (and .IsJoinedData  .IsList))}}
+		{{- if (and (not .IsJoinedData) (isCompositeType .Type))}}
+		{{.GoName}} :n.{{- .GoName }}.ToModel(),
+		{{- else}}
+		{{- if (eq .Type "int")}}
+		{{.GoName}} : int64(n.{{- .GoName }}), 
+		{{- else }}
+		{{- if (eq .Type "time")}}
+		{{.GoName}} : n.{{- .GoName }}.Time, 
+		{{- else}}
+		{{.GoName}} : n.{{- .GoName }}, 
+		{{- end}}
+		{{- end}}
+		{{- end}}
+		{{- end}}
+
+		{{- end}}
+	}
 }
 {{- end}}
 

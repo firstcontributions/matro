@@ -3,10 +3,10 @@ package writer
 import (
 	"bytes"
 	"context"
-	"log"
 	"text/template"
 
 	"github.com/firstcontributions/matro/internal/generators/utils"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -34,14 +34,13 @@ func (w *TextWriter) Compile(ctx context.Context, tmpl string, data interface{})
 		Funcs(FuncMap()).
 		Parse(tmpl)
 	if err != nil {
-		log.Fatalf("error on parsing remplate %v", err)
+		logrus.Fatalf("error on parsing remplate %v", err)
 		return err
 	}
 
 	var b bytes.Buffer
 	if err := t.Execute(&b, data); err != nil {
-		log.Fatalf("error on exc remplate %v", err)
-
+		logrus.Fatalf("error on exc remplate %v", err)
 		return err
 	}
 
@@ -58,6 +57,7 @@ func (*TextWriter) Format(ctx context.Context) error {
 
 // write will write contents to given file
 func (w *TextWriter) write(path, filename string) error {
+	logrus.Infof("generating %s/%s", path, filename)
 	fw, err := utils.GetFileWriter(path, filename)
 	if err != nil {
 		return err

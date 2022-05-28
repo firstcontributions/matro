@@ -39,5 +39,8 @@ func FuncMap() template.FuncMap {
 			}
 			return val
 		},
+		"isAditField": func(field string) bool {
+			return field == "time_created" || field == "time_updated" || field == "id"
+		},
 	}
 }

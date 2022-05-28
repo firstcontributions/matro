@@ -72,7 +72,7 @@ func  ({{ .Name }} *{{title .Name}}) FromProto(proto{{- title .Name }} *proto.{{
 }
 {{- end}}
 
-{{- if (ne .Module.DB "")}}
+{{- if (and (ne .Module.DB "") .IsNode)}}
 type {{title .Name -}}Update struct {
 	{{- range .Fields}}
 	{{- if  .IsMutatable }}
