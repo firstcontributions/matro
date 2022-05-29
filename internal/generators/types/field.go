@@ -126,7 +126,12 @@ func (f *Field) GoType(args ...bool) string {
 			t = GetGoGraphQLType(f.Type)
 		}
 		if f.IsList {
-			t = "[]" + t
+			if IsCompositeType(f.Type) {
+				t = "[]" + t
+			} else {
+				t = "[]*" + t
+			}
+
 		}
 	}
 	if (f.IsPrimitive || f.Type == "time") && len(args) > 1 && args[1] {
@@ -161,7 +166,7 @@ func (f *Field) GraphQLFortmattedType() string {
 		plType := pluralize.NewClient().Plural(f.Type)
 		t = fmt.Sprintf("%sConnection", utils.ToTitleCase(plType))
 	}
-	if f.IsList && !f.IsPaginated {
+	if f.IsList && !f.IsPaginated && IsCompositeType(f.Type) {
 		t = fmt.Sprintf("[%s]", t)
 	}
 	if !f.IsNullable {
