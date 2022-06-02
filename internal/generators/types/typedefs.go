@@ -66,6 +66,17 @@ func getTypeMap(d *parser.Definition, types []*CompositeType, edges *utils.Set) 
 			if f.IsJoinedData && f.IsList && !t.AllReferedFields {
 				typeMap[f.Type].ReferedTypes[t.Name] = t
 			}
+			if _, ok := typeMap[f.Type]; ok {
+				typeMap[f.Type].ParentTypes[t.Name] = t
+			}
+		}
+	}
+	for _, t := range typeMap {
+		if t.NoGraphql || t.IsNode {
+			continue
+		}
+		for _, rt := range t.ParentTypes {
+			typeMap[t.Name].GraphqlOps.Union(rt.GraphqlOps)
 		}
 	}
 	return typeMap

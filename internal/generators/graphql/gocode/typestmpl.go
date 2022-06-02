@@ -217,13 +217,13 @@ type {{.EdgeName}} struct {
 
 
 {{- define "modelTypeAdatper" }}
-func (n *{{title .Name}}) ToModel() *{{- .Module.Name -}}.{{- title .Name}}{
+func (n *{{title .Name}}) ToModel() *{{- .Module.Store -}}.{{- title .Name}}{
 	if n == nil {
 		return nil
 	}
-	 return &{{- .Module.Name -}}.{{- title .Name}} {
+	 return &{{- .Module.Store -}}.{{- title .Name}} {
 		{{- range .Fields }}
-		{{- if  (not (and .IsJoinedData  .IsList))}}
+		{{- if  (not (or (and .IsJoinedData  .IsList) .NoGraphql))}}
 		{{- if (and (not .IsJoinedData) (isCompositeType .Type))}}
 		{{.GoName}} :n.{{- .GoName }}.ToModel(),
 		{{- else}}

@@ -28,10 +28,11 @@ type CompositeType struct {
 	Name             string
 	Fields           map[string]*Field
 	ReferedTypes     map[string]*CompositeType
+	ParentTypes      map[string]*CompositeType
 	IsNode           bool
 	IsEdge           bool
 	Filters          []string
-	GraphqlOps       *parser.Ops
+	GraphqlOps       parser.Ops
 	SearchFields     []string
 	MutatableFields  []string
 	Module           *parser.Module
@@ -75,6 +76,7 @@ func NewCompositeType(typesMap map[string]*parser.Type, typeDef *parser.Type, mo
 		AllReferedFields: allRefered,
 		NoGraphql:        typeDef.NoGraphql,
 		ReferedTypes:     map[string]*CompositeType{},
+		ParentTypes:      map[string]*CompositeType{},
 	}
 }
 

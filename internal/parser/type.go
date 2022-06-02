@@ -34,7 +34,7 @@ var (
 type Meta struct {
 	SearchFields    []string `json:"search_fields"`
 	Filters         []string `json:"filters"`
-	GraphqlOps      *Ops     `json:"graphql_ops"`
+	GraphqlOps      Ops      `json:"graphql_ops"`
 	MutatableFields []string `json:"mutatable_fields"`
 }
 
@@ -57,6 +57,12 @@ func (o *Ops) Read() bool {
 }
 func (o *Ops) Delete() bool {
 	return o != nil && o.delete
+}
+func (o *Ops) Union(op2 Ops) {
+	o.create = o.create || op2.create
+	o.read = o.read || op2.read
+	o.update = o.update || op2.update
+	o.delete = o.delete || op2.delete
 }
 
 // UnmarshalJSON is a custom json unmarshaller
