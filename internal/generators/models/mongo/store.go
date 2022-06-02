@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.opentelemetry.io/contrib/instrumentation/go.mongodb.org/mongo-driver/mongo/otelmongo"
 )
 
 const (
@@ -25,7 +26,7 @@ type {{ title .Name -}}Store struct {
 // New {{- title .Name -}}Store makes connection to mongo server by provided url 
 // and return an instance of the client
 func New {{- title .Name -}}Store(ctx context.Context, url string) (* {{ title .Name -}}Store, error) {
-	client, err := mongo.NewClient(options.Client().ApplyURI(url))
+	client, err := mongo.NewClient(options.Client().ApplyURI(url).SetMonitor(otelmongo.NewMonitor()))
 	if err != nil {
 		return nil, err
 	}

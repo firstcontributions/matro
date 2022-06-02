@@ -78,10 +78,11 @@ func (g *Generator) generateProtoForModule(ctx context.Context, m Module, tmpl s
 
 // generateGRPCService generates grpc service stub from the proto file
 func (*Generator) generateGRPCService(protoPath string) error {
-	logrus.Debug("going to generate grpc")
+	logrus.Info("going to generate grpc")
 	if res, err := exec.Command(
 		"protoc",
-		"--go_out=plugins=grpc:.",
+		"--go_out=.",
+		"--go-grpc_out=.",
 		protoPath,
 	).Output(); err != nil {
 		logrus.Debug("grpc error", string(res), err)

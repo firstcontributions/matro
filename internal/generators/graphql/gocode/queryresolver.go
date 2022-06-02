@@ -64,9 +64,6 @@ func (r *Resolver) {{title .Query.Name}}(ctx context.Context, {{- if (ne (len .Q
 {{- if not (empty .ReturnType.SearchFields)}}
 	nil,
 {{- end}}
-{{- range .ReturnType.ReferedFields }}
-		&n.Id,
-{{- end }}
 {{- $t := .}}
 {{- range $q.Args}}
 	{{- if (isElemOfStrArray ($t.ReturnType.Filters) .Name)}}
@@ -77,6 +74,7 @@ func (r *Resolver) {{title .Query.Name}}(ctx context.Context, {{- if (ne (len .Q
 		{{- end}}
 	{{- end}}
 {{- end}}
+	n.ref,
 	in.After,
 	in.Before,
 	first,

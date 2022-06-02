@@ -58,33 +58,31 @@ func get{{- title (plural .Name) -}}Request (
 	}
 	{{- if not (empty .SearchFields)}}
 	if search != nil {
-		request.Search = *search
+		request.Search = search
 	}
-
+	{{- end}}
 	{{- $t := .}}
-	{{- range .ReferedFields }}
-	if {{- . -}}ID != nil {
-		request.{{- . -}}Id = *{{- . -}}ID
+	{{- range .ReferedTypes }}
+	if {{ .Name -}} != nil {
+		request.{{- title .Name -}}Id = &{{- .Name -}}.Id
 	}
 	{{- end }}
 	{{- range .Filters}}
 	if {{ camel .}} != nil {
-		request.{{- title . -}} = *{{ camel .}}
+		request.{{- title . -}} = {{ camel .}}
 	}
 	{{- end}}
-	{{- end}}
-
 	if after != nil {
-		request.After = *after
+		request.After = after
 	}
 	if before != nil {
-		request.After = *before
+		request.After = before
 	}
 	if first != nil {
-		request.First = *first
+		request.First = first
 	}
 	if last != nil {
-		request.Last = *last
+		request.Last = last
 	}
 	return request
 }
@@ -114,8 +112,8 @@ func (s *{{- title .Module -}}Store) Get{{- title (plural .Name) -}} (
 		search ,
 		{{- end}}
 		{{- $t := .}}
-		{{- range .ReferedFields }}
-			{{- . -}}ID,
+		{{- range .ReferedTypes }}
+			{{ .Name -}},
 		{{- end }}
 		{{- range .Filters}}
 			{{ camel .}},
@@ -166,8 +164,8 @@ func (s *{{- title .Module -}}Store) Delete{{- title .Name -}}ByID (ctx context.
 
 {{- define "getargs"}}
 {{- $t := .}}
-{{- range .ReferedFields }}
-	{{. -}}ID *string,
+{{- range .ReferedTypes }}
+	{{.Name -}} *{{.Module.Store -}}.{{- title .Name}},
 {{- end }}
 {{- range .Filters}}
 	{{ camel .}} *{{$t.FieldType .}},

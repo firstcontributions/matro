@@ -6,6 +6,8 @@ package grpc
 import (
 	pool "github.com/processout/grpc-go-pool"
 	"google.golang.org/grpc"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 type {{ title .Name -}}Store struct {
@@ -17,7 +19,11 @@ type {{ title .Name -}}Store struct {
 func New {{- title .Name -}}Store(ctx context.Context, url string, initConnections, connectionCapacity, ttl int) (* {{ title .Name -}}Store, error) {
 	pool, err := pool.New(
 		func() (*grpc.ClientConn, error) {
-			return grpc.Dial(url, grpc.WithInsecure())
+			return grpc.Dial(
+				url,
+				grpc.WithTransportCredentials(insecure.NewCredentials()),
+				grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
+			)
 		},
 		initConnections,
 		connectionCapacity,

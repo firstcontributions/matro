@@ -4,8 +4,8 @@ const modelTyp = `
 package {{ .Module.Name -}}store
 
 type {{title .Name}} struct {
-	{{- range .ReferedFields}}
-	{{ title .}}ID string ` + "`bson:\"{{- . -}}_id\"`" + `
+	{{- range .ReferedTypes}}
+	{{ title .Name}}ID string ` + "`bson:\"{{- .Name -}}_id\"`" + `
 	{{- end}}
 	{{- range .Fields}}
 	{{- if  (not (and .IsJoinedData  .IsList))}}
@@ -30,8 +30,8 @@ func ({{ .Name }} *{{title .Name}}) ToProto() *proto.{{- title .Name -}} {
 	{{- $t := . -}}
 	
 	return &proto.{{- title .Name -}} {
-		{{- range .ReferedFields}}
-			{{ title .}}Id : {{ $t.Name -}}.{{- title .}}ID ,
+		{{- range .ReferedTypes}}
+			{{ title .Name}}Id : {{ $t.Name -}}.{{- title .Name}}ID ,
 		{{- end}}
 		{{- range .Fields}}
 			{{- if  (not (and .IsJoinedData  .IsList))}}
@@ -41,7 +41,11 @@ func ({{ .Name }} *{{title .Name}}) ToProto() *proto.{{- title .Name -}} {
 					{{- if  (eq .Type "time")}}
 						{{ .GoName true}} :  timestamppb.New({{ $t.Name -}}.{{- .GoName true}}),
 					{{- else }}
+						{{- if (and .IsList (eq .Type "string"))}}
+						{{ .GoName true}} :  utils.ToStringArray({{ $t.Name -}}.{{- .GoName true}}),
+						{{- else}}
 						{{ .GoName true}} :  {{ $t.Name -}}.{{- .GoName true}},
+						{{- end}}
 					{{- end}}
 				{{- end}}
 			{{- end}}
@@ -52,8 +56,8 @@ func ({{ .Name }} *{{title .Name}}) ToProto() *proto.{{- title .Name -}} {
 func  ({{ .Name }} *{{title .Name}}) FromProto(proto{{- title .Name }} *proto.{{- title .Name}}) *{{title .Name}}{
 	{{- $t := . -}}
 	
-	{{- range .ReferedFields}}
-		{{ $t.Name -}}.{{- title .}}ID = proto{{- title $t.Name -}}.{{- title .}}Id 
+	{{- range .ReferedTypes}}
+		{{ $t.Name -}}.{{- title .Name}}ID = proto{{- title $t.Name -}}.{{- title .Name}}Id 
 	{{- end}}
 	{{- range .Fields}}
 		{{- if  (not (and .IsJoinedData  .IsList))}}
@@ -63,7 +67,11 @@ func  ({{ .Name }} *{{title .Name}}) FromProto(proto{{- title .Name }} *proto.{{
 				{{- if  (eq .Type "time")}}
 				{{ $t.Name -}}.{{- .GoName true}}  = proto{{- title $t.Name -}}.{{- .GoName true}}.AsTime()
 				{{- else }}
+				{{- if (and .IsList (eq .Type "string"))}}
+				{{ $t.Name -}}.{{- .GoName true}}   = utils.FromStringArray(proto{{- title $t.Name -}}.{{- .GoName true}})
+				{{- else}}
 				{{ $t.Name -}}.{{- .GoName true}}   = proto{{- title $t.Name -}}.{{- .GoName true}}
+				{{- end}}
 				{{- end}}
 			{{- end}}
 		{{- end}}
@@ -81,22 +89,57 @@ type {{title .Name -}}Update struct {
 	{{- end}}
 }
 {{- if  .HaveProto}}
-func ({{ .Name }} *{{title .Name -}}Update) ToProto() *proto.{{- title .Name -}} {
+func ({{ .Name }} *{{title .Name -}}Update) ToProto() *proto.Update{{- title .Name -}}Request {
 	{{- $t := . -}}
-	p := &proto.{{- title .Name -}} {}
+	p := &proto.Update{{- title .Name -}}Request {}
 		
 	{{- range .Fields}}
 	{{- if  .IsMutatable }}
 	if {{ $t.Name -}}.{{- .GoName true}} != nil {
-		{{- if  (eq .Type "time")}}
-		p.{{- .GoName true}} =  timestamppb.New(*{{ $t.Name -}}.{{- .GoName true}})
-		{{- else }}
-			p.{{- .GoName true}} =  *{{- $t.Name -}}.{{- .GoName true}}
+		{{- if  (not (and .IsJoinedData  .IsList))}}
+			{{- if (and (not .IsJoinedData) (isCompositeType .Type))}}
+				p.{{- .GoName true}} =  {{ $t.Name -}}.{{- .GoName true -}}.ToProto()
+			{{- else}}
+				{{- if  (eq .Type "time")}}
+				p.{{ .GoName true}} = timestamppb.New(*{{ $t.Name -}}.{{- .GoName true}})
+				{{- else }}
+					{{- if (and .IsList (eq .Type "string"))}}
+					p.{{ .GoName true}} =  utils.ToStringArray({{ $t.Name -}}.{{- .GoName true}})
+					{{- else}}
+					p.{{ .GoName true}} =  {{ $t.Name -}}.{{- .GoName true}}
+					{{- end}}
+				{{- end}}
+			{{- end}}
 		{{- end}}
 	}
 	{{- end}}
 	{{- end}}
 	return p
+}
+
+func ({{.Name}} *{{title .Name -}}Update) FromProto(proto{{- title .Name }} *proto.Update{{- title .Name -}}Request) {
+	{{- $t := . -}}
+		
+	{{- range .Fields}}
+	{{- if  .IsMutatable }}
+	{{- if  (not (and .IsJoinedData  .IsList))}}
+		{{- if (and (not .IsJoinedData) (isCompositeType .Type))}}
+			{{ $t.Name -}}.{{- .GoName true}}   = New{{- title .Type -}}().FromProto(proto{{- title $t.Name -}}.{{- .GoName true}})
+		{{- else}}
+			{{- if  (eq .Type "time")}}
+			{{.Name}} := proto{{- title $t.Name -}}.{{- .GoName true}}.AsTime()
+			{{ $t.Name -}}.{{- .GoName true}}  = &{{- .Name}}
+			{{- else }}
+			{{- if (and .IsList (eq .Type "string"))}}
+			{{ $t.Name -}}.{{- .GoName true}}   = utils.FromStringArray(proto{{- title $t.Name -}}.{{- .GoName true}})
+			{{- else}}
+			{{ $t.Name -}}.{{- .GoName true}}   = proto{{- title $t.Name -}}.{{- .GoName true}}
+			{{- end}}
+			{{- end}}
+		{{- end}}
+		{{- end}}
+	{{- end}}
+	{{- end}}
 }
 {{- end}}
 {{- end}}
