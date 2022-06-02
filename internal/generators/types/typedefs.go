@@ -64,10 +64,7 @@ func getTypeMap(d *parser.Definition, types []*CompositeType, edges *utils.Set) 
 	for _, t := range types {
 		for _, f := range t.Fields {
 			if f.IsJoinedData && f.IsList && !t.AllReferedFields {
-				typeMap[f.Type].ReferedFields = append(
-					typeMap[f.Type].ReferedFields,
-					t.Name,
-				)
+				typeMap[f.Type].ReferedTypes[t.Name] = t
 			}
 		}
 	}

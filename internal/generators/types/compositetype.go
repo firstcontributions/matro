@@ -27,7 +27,7 @@ var auditFields = []*Field{
 type CompositeType struct {
 	Name             string
 	Fields           map[string]*Field
-	ReferedFields    []string
+	ReferedTypes     map[string]*CompositeType
 	IsNode           bool
 	IsEdge           bool
 	Filters          []string
@@ -74,6 +74,7 @@ func NewCompositeType(typesMap map[string]*parser.Type, typeDef *parser.Type, mo
 		Module:           &module,
 		AllReferedFields: allRefered,
 		NoGraphql:        typeDef.NoGraphql,
+		ReferedTypes:     map[string]*CompositeType{},
 	}
 }
 

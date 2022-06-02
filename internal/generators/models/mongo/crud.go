@@ -68,9 +68,9 @@ func (s *{{- title .Module -}}Store) Get{{- title (plural .Name) -}} (
 	}
 	{{- end }}
 
-	{{- range .ReferedFields }}
-		if {{. -}}ID != nil {
-			qb.Eq("{{- . -}}_id", {{. -}}ID)
+	{{- range .ReferedTypes }}
+		if {{.Name -}} != nil {
+			qb.Eq("{{- .Name -}}_id", {{.Name -}}.Id)
 		}
 	{{- end }}
 	{{- if not (empty .SearchFields)}}
@@ -173,8 +173,8 @@ func (s *{{- title .Module -}}Store) Delete{{- title .Name -}}ByID (ctx context.
 
 {{- define "getargs"}}
 {{- $t := .}}
-{{- range .ReferedFields }}
-	{{. -}}ID *string,
+{{- range .ReferedTypes }}
+	{{.Name -}} *{{.Module.Store -}}.{{- title .Name}},
 {{- end }}
 {{- range .Filters}}
 	{{ camel .}} *{{$t.FieldType .}},

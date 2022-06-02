@@ -34,6 +34,7 @@ import (
 
 {{- define "typeDef" }}
 type {{ title .Name}} struct {
+	ref *{{- .Module.Store -}}.{{- title .Name}}
 	{{- range .Fields}}
 	{{- template "fieldDef" .}}
 	{{- end}}
@@ -49,11 +50,11 @@ type Create{{- title .Name -}}Input struct {
 	{{- end}}
 }
 
-func (n *Create{{- title .Name -}}Input) ToModel() *{{-  plural .Module.Name -}}store.{{- title .Name}}{
+func (n *Create{{- title .Name -}}Input) ToModel() *{{- .Module.Store -}}.{{- title .Name}}{
 	if n == nil {
 		return nil
 	}
-	 return &{{-  plural .Module.Name -}}store.{{- title .Name}} {
+	 return &{{- .Module.Store -}}.{{- title .Name}} {
 		{{- range .Fields }}
 		{{- if (not (or (isAditField .Name) .IsQuery))}}
 			{{- template "inputTypeField" .}}
@@ -73,11 +74,11 @@ type Update{{- title .Name -}}Input struct {
 	{{- end}}
 }
 
-func (n *Update{{- title .Name -}}Input) ToModel() *{{-  plural .Module.Name -}}store.{{- title .Name -}}Update {
+func (n *Update{{- title .Name -}}Input) ToModel() *{{- .Module.Store -}}.{{- title .Name -}}Update {
 	if n == nil {
 		return nil
 	}
-	 return &{{-  plural .Module.Name -}}store.{{- title .Name -}}Update {
+	 return &{{- .Module.Store -}}.{{- title .Name -}}Update {
 		{{- range .Fields }}
 		{{- if (and .IsMutatable (not (or (isAditField .Name) .IsQuery)))}}
 			{{- template "inputTypeField" .}}
@@ -122,6 +123,7 @@ func New {{- title .Name}} (m *{{.Module.Name -}}store.{{-  title .Name}}) *{{- 
 	}
 {{- end}}
 	return &{{- title .Name}} {
+		ref : m,
 		{{- range .Fields}}
 		{{- if  (not (or (and .IsJoinedData  .IsList) .NoGraphql))}}
 		{{- if (and (not .IsJoinedData) (isCompositeType .Type))}}
@@ -215,11 +217,11 @@ type {{.EdgeName}} struct {
 
 
 {{- define "modelTypeAdatper" }}
-func (n *{{title .Name}}) ToModel() *{{-  plural .Module.Name -}}store.{{- title .Name}}{
+func (n *{{title .Name}}) ToModel() *{{- .Module.Name -}}.{{- title .Name}}{
 	if n == nil {
 		return nil
 	}
-	 return &{{-  plural .Module.Name -}}store.{{- title .Name}} {
+	 return &{{- .Module.Name -}}.{{- title .Name}} {
 		{{- range .Fields }}
 		{{- if  (not (and .IsJoinedData  .IsList))}}
 		{{- if (and (not .IsJoinedData) (isCompositeType .Type))}}

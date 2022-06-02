@@ -10,6 +10,7 @@ import (
 	"github.com/firstcontributions/matro/internal/generators/graphql/gocode"
 	"github.com/firstcontributions/matro/internal/generators/graphql/schema"
 	"github.com/firstcontributions/matro/internal/generators/grpc/proto"
+	"github.com/firstcontributions/matro/internal/generators/grpc/service"
 	"github.com/firstcontributions/matro/internal/generators/grpc/store"
 	"github.com/firstcontributions/matro/internal/generators/models/mongo"
 	"github.com/firstcontributions/matro/internal/parser"
@@ -76,6 +77,7 @@ func (c *Server) Exec() error {
 		store.NewGenerator(path, d),
 		mongo.NewGenerator(path, d),
 		gomod.NewGenerator(path, d),
+		service.NewGenerator(path, d),
 	}
 	ctx := context.Background()
 	for _, g := range generators {

@@ -31,8 +31,12 @@ type Store interface {
 {{- range .Filters -}}
 	{{ . }} *{{$t.FieldType . -}},
 {{- end -}}
-{{- range .ReferedFields -}}
-	{{.}} *string,
+{{- range .ReferedTypes -}}
+	{{- if (eq $t.Module.Name .Module.Name)}}
+	{{.Name}} *{{- title .Name}},
+	{{- else}}
+	{{.Name}} *{{.Module.Store}}.{{- title .Name}},
+	{{- end}}
 {{- end -}}
 {{- end -}}
 `
