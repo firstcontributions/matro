@@ -38,11 +38,13 @@ var paginationArgs = []Field{
 // TODO(@gokultp) clean up this function, make it more readable
 // NewField returns an instance of the field
 func NewField(typesMap map[string]*parser.Type, typeDef *parser.Type, name string) *Field {
+
 	if typeDef.IsPrimitive() {
 		return &Field{
 			Name:        name,
 			Type:        typeDef.Type,
 			IsPrimitive: true,
+			NoGraphql:   typeDef.NoGraphql,
 		}
 	}
 
@@ -175,6 +177,23 @@ func (f *Field) GraphQLFortmattedType() string {
 	return t
 }
 
+// TODO: @gokul clean this up
+// GraphQLFortmattedType return the graphql type name
+func (f *Field) GraphQLFortmattedInputType() string {
+	t := GetGraphQLType(f)
+	if f.IsPaginated {
+		plType := pluralize.NewClient().Plural(f.Type)
+		t = fmt.Sprintf("%sConnection", utils.ToTitleCase(plType))
+	}
+	if f.IsList && !f.IsPaginated && IsCompositeType(f.Type) {
+		t = fmt.Sprintf("[%s]", t)
+	}
+	t = t + "Input"
+	if !f.IsNullable {
+		t = t + "!"
+	}
+	return t
+}
 func (f *Field) ArgNames() []string {
 	args := []string{}
 	for _, a := range f.Args {

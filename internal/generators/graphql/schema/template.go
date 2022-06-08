@@ -36,8 +36,11 @@ type PageInfo {
 {{- range .Types}}
 	{{- if (not .NoGraphql)}}
 	{{- template "typeDef" .}}
-	{{- if (and .IsNode (or .GraphqlOps.Create .GraphqlOps.Update))}}
+	{{- if .GraphqlOps.Create}}
 	{{- template "inputType" .}}
+	{{- end}}
+	{{- if (and .IsNode .GraphqlOps.Update)}}
+	{{- template "inputTypeUpdate" .}}
 	{{- end}}
 	{{- if .IsEdge}}
 	{{- template "connectionDef" .}}
@@ -69,18 +72,28 @@ type Mutation {
 
 {{- define "inputType"}}
 
-input Create{{- title .Name -}}Input {
+input {{ title .Name -}}Input {
 	{{- range .Fields}}
 	{{- if (not (or (isAditField .Name) .IsQuery .NoGraphql))}}
+	{{- if .IsPrimitive}}
 	{{.GraphQLFormattedName}}: {{.GraphQLFortmattedType}}
+	{{- else}} 
+	{{.GraphQLFormattedName}}: {{.GraphQLFortmattedInputType}}
+	{{- end}}
 	{{- end}}
 	{{- end}}
 }
+{{- end}}
 
+{{- define "inputTypeUpdate"}}
 input Update{{- title .Name -}}Input {
 	{{- range .Fields}}
 	{{- if (and .IsMutatable (not (or (isAditField .Name) .IsQuery .NoGraphql)))}}
+	{{- if .IsPrimitive}}
 	{{.GraphQLFormattedName}}: {{.GraphQLFortmattedType}}
+	{{- else}} 
+	{{.GraphQLFormattedName}}: {{.GraphQLFortmattedInputType}}
+	{{- end}}
 	{{- end}}
 	{{- end}}
 }
@@ -121,8 +134,8 @@ type {{.ConnectionName}} {
 
 
 {{- define "mutation" }}
-{{- if (.GraphqlOps.Create) }} 
-	create{{- title .Name}}({{.Name}}: Create{{- title .Name -}}Input!): {{title .Name}}!
+{{- if (and .IsNode .GraphqlOps.Create) }} 
+	create{{- title .Name}}({{.Name}}: {{- title .Name -}}Input!): {{title .Name}}!
 {{- end}}
 {{- end}}
 `
