@@ -162,7 +162,11 @@ func (f *Field) GraphQLFormattedName() string {
 }
 
 // GraphQLFortmattedType return the graphql type name
-func (f *Field) GraphQLFortmattedType() string {
+func (f *Field) GraphQLFortmattedType(args ...bool) string {
+	var forceFieldsTobeOptional bool
+	if len(args) > 0 && args[0] {
+		forceFieldsTobeOptional = true
+	}
 	t := GetGraphQLType(f)
 	if f.IsPaginated {
 		plType := pluralize.NewClient().Plural(f.Type)
@@ -171,7 +175,7 @@ func (f *Field) GraphQLFortmattedType() string {
 	if f.IsList && !f.IsPaginated && IsCompositeType(f.Type) {
 		t = fmt.Sprintf("[%s]", t)
 	}
-	if !f.IsNullable {
+	if !forceFieldsTobeOptional && !f.IsNullable {
 		t = t + "!"
 	}
 	return t
@@ -179,7 +183,11 @@ func (f *Field) GraphQLFortmattedType() string {
 
 // TODO: @gokul clean this up
 // GraphQLFortmattedType return the graphql type name
-func (f *Field) GraphQLFortmattedInputType() string {
+func (f *Field) GraphQLFortmattedInputType(args ...bool) string {
+	var forceFieldsTobeOptional bool
+	if len(args) > 0 && args[0] {
+		forceFieldsTobeOptional = true
+	}
 	t := GetGraphQLType(f)
 	if f.IsPaginated {
 		plType := pluralize.NewClient().Plural(f.Type)
@@ -189,7 +197,7 @@ func (f *Field) GraphQLFortmattedInputType() string {
 		t = fmt.Sprintf("[%s]", t)
 	}
 	t = t + "Input"
-	if !f.IsNullable {
+	if !forceFieldsTobeOptional && !f.IsNullable {
 		t = t + "!"
 	}
 	return t
