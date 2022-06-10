@@ -65,6 +65,7 @@ func (n *Create{{- title .Name -}}Input) ToModel() *{{- .Module.Store -}}.{{- ti
 
 {{- if (and .IsNode .GraphqlOps.Update)}}
 type Update{{- title .Name -}}Input struct {
+	ID graphql.ID
 	{{- range .Fields}}
 	{{- if (and .IsMutatable (not (or (isAditField .Name) .IsQuery .NoGraphql)))}}
 	{{- if  (not (and .IsJoinedData  .IsList))}}

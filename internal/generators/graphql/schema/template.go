@@ -87,12 +87,13 @@ input {{ title .Name -}}Input {
 
 {{- define "inputTypeUpdate"}}
 input Update{{- title .Name -}}Input {
+	Id: ID!
 	{{- range .Fields}}
 	{{- if (and .IsMutatable (not (or (isAditField .Name) .IsQuery .NoGraphql)))}}
 	{{- if .IsPrimitive}}
-	{{.GraphQLFormattedName}}: {{.GraphQLFortmattedType}}
+	{{.GraphQLFormattedName}}: {{.GraphQLFortmattedType true}}
 	{{- else}} 
-	{{.GraphQLFormattedName}}: {{.GraphQLFortmattedInputType}}
+	{{.GraphQLFormattedName}}: {{.GraphQLFortmattedInputType true}}
 	{{- end}}
 	{{- end}}
 	{{- end}}
@@ -136,6 +137,9 @@ type {{.ConnectionName}} {
 {{- define "mutation" }}
 {{- if (and .IsNode .GraphqlOps.Create) }} 
 	create{{- title .Name}}({{.Name}}: {{- title .Name -}}Input!): {{title .Name}}!
+{{- end}}
+{{- if (and .IsNode .GraphqlOps.Update) }} 
+	update{{- title .Name}}({{.Name}}: Update{{- title .Name -}}Input!): {{title .Name}}!
 {{- end}}
 {{- end}}
 `
