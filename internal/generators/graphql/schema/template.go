@@ -87,7 +87,7 @@ input {{ title .Name -}}Input {
 
 {{- define "inputTypeUpdate"}}
 input Update{{- title .Name -}}Input {
-	Id: ID!
+	id: ID!
 	{{- range .Fields}}
 	{{- if (and .IsMutatable (not (or (isAditField .Name) .IsQuery .NoGraphql)))}}
 	{{- if .IsPrimitive}}
