@@ -9,11 +9,31 @@ func (m *Resolver) Create{{- title .Name }}(
 	args struct {
 		{{title .Name}}  *Create{{- title .Name -}}Input
 	},
-) (*{{- title .Name }}, error) {
-	store := storemanager.FromContext(ctx)
+) (*{{- title .Name }}, error) {	
+	session := session.FromContext(ctx)
+	if session == nil {
+		return nil, errors.New("unauthorized")
+	}
 
-	{{- $type := .}}
-	{{.Name}}, err := store.{{- title .Module.Name -}}Store.Create{{- title .Name }}(ctx, args.{{title .Name -}}.ToModel())
+	{{ $type := .}}
+	{{.Name}}ModelInput, err := args.{{title .Name -}}.ToModel()
+	if err != nil {
+		return nil, err
+	}
+	{{- range .Fields}}
+	{{- if .ViewerRefence}} 
+	{{$type.Name -}}ModelInput.{{- title .Name}} = session.UserID()
+	{{- end}}
+	{{- end}}
+
+	{{- range .ReferedTypes}}
+	{{- if .IsViewerType}} 
+	{{$type.Name -}}ModelInput.{{- title .Name}}ID = session.UserID()
+	{{- end}}
+	{{- end}}
+
+	{{.Name}}, err := storemanager.FromContext(ctx).
+		{{- title .Module.Name -}}Store.Create{{- title .Name }}(ctx, {{.Name}}ModelInput)
 	if err != nil {
 		return nil, err
 	}
@@ -37,7 +57,7 @@ func (m *Resolver) Update{{- title .Name }}(
 	if err := store.{{- title .Module.Name -}}Store.Update{{- title .Name }}(ctx, id.ID, args.{{title .Name -}}.ToModel());err != nil {
 		return nil, err
 	}
-	user, err := store.{{- title .Module.Name -}}Store.Get{{- title .Name }}ByID(ctx, id.ID)
+	{{.Name}}, err := store.{{- title .Module.Name -}}Store.Get{{- title .Name }}ByID(ctx, id.ID)
 	if err != nil {
 		return nil, err
 	}

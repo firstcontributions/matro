@@ -35,7 +35,7 @@ func NewTypeDefs(path string, d *parser.Definition) *TypeDefs {
 	queries, queryTypes := getQueries(d, allTypesMap, queriesModule)
 	for _, m := range d.Modules {
 		for _, def := range m.Entities {
-			t := NewCompositeType(allTypesMap, def, m)
+			t := NewCompositeType(d, m, allTypesMap, def)
 			edges.Union(t.EdgeFields())
 			types = append(types, t)
 			queries = append(queries, t.Queries()...)

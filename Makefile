@@ -1,4 +1,4 @@
-VERSION="1.0.0-alpha"
+VERSION="1.0.1-alpha"
 
 config:
 	go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.26

@@ -1,6 +1,9 @@
 package types
 
 import (
+	"fmt"
+
+	"github.com/firstcontributions/matro/internal/generators/utils"
 	"github.com/firstcontributions/matro/internal/parser"
 )
 
@@ -10,16 +13,23 @@ type Query struct {
 	Parent *CompositeType
 }
 
+func (q Query) InputName() string {
+	if q.Parent == nil {
+		return fmt.Sprintf("%sInput", utils.ToTitleCase(q.Name))
+	}
+	return fmt.Sprintf("%s%sInput", utils.ToTitleCase(q.Parent.Name), utils.ToTitleCase(q.Name))
+}
+
 func getQueries(d *parser.Definition, typesMap map[string]*parser.Type, queryModule parser.Module) ([]Query, map[string]*CompositeType) {
 	queries := []Query{}
 	graphQLOnlyTypes := map[string]*CompositeType{}
 	for _, q := range d.Queries {
 		if q.Schema == "" {
-			t := NewCompositeType(typesMap, q, queryModule)
+			t := NewCompositeType(d, queryModule, typesMap, q)
 			graphQLOnlyTypes[t.Name] = t
 			queries = append(queries, t.Queries()...)
 		}
-		field := NewField(typesMap, q, q.Name)
+		field := NewField(d, typesMap, q, q.Name)
 		field.IsQuery = true
 		queries = append(queries, Query{
 			Field: field,
