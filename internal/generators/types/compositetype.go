@@ -39,10 +39,11 @@ type CompositeType struct {
 	AllReferedFields bool
 	HardcodedFilters map[string]string
 	NoGraphql        bool
+	IsViewerType     bool
 }
 
 // NewCompositeType return an instance of the CompositeType
-func NewCompositeType(typesMap map[string]*parser.Type, typeDef *parser.Type, module parser.Module) *CompositeType {
+func NewCompositeType(d *parser.Definition, module parser.Module, typesMap map[string]*parser.Type, typeDef *parser.Type) *CompositeType {
 	fields := map[string]*Field{}
 	isNode := false
 	allRefered := true
@@ -50,7 +51,7 @@ func NewCompositeType(typesMap map[string]*parser.Type, typeDef *parser.Type, mo
 		if field == "id" {
 			isNode = true
 		}
-		f := NewField(typesMap, def, field)
+		f := NewField(d, typesMap, def, field)
 		fields[field] = f
 		if !(f.IsJoinedData && f.IsList) {
 			allRefered = false
@@ -77,6 +78,7 @@ func NewCompositeType(typesMap map[string]*parser.Type, typeDef *parser.Type, mo
 		NoGraphql:        typeDef.NoGraphql,
 		ReferedTypes:     map[string]*CompositeType{},
 		ParentTypes:      map[string]*CompositeType{},
+		IsViewerType:     typeDef.Name == d.Defaults.ViewerType,
 	}
 }
 

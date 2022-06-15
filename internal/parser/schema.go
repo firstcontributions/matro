@@ -5,11 +5,16 @@ import (
 	"io/ioutil"
 )
 
+type Defaults struct {
+	ViewerType string `json:"viewer_type"`
+}
+
 // Definition encapsulates the input schema definiton
 type Definition struct {
-	Modules []Module `json:"modules"`
-	Repo    string   `json:"repo"`
-	Queries []*Type  `json:"high_level_queries"`
+	Modules  []Module  `json:"modules"`
+	Repo     string    `json:"repo"`
+	Queries  []*Type   `json:"high_level_queries"`
+	Defaults *Defaults `json:"defaults"`
 }
 
 // NewDefinition return an instance of Definition

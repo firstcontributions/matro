@@ -101,6 +101,7 @@ type _Type struct {
 	Meta             Meta              `json:"meta"`
 	HardcodedFilters map[string]string `json:"hardcoded_filters"`
 	NoGraphql        bool              `json:"no_graphql"`
+	ViewerRefence    bool              `json:"viewer_reference"`
 }
 
 // validateTypeAndGetFirstNonEmptyIdx validates the given type string binary

@@ -74,12 +74,18 @@ type Mutation {
 
 input {{ title .Name -}}Input {
 	{{- range .Fields}}
-	{{- if (not (or (isAditField .Name) .IsQuery .NoGraphql))}}
+	{{- if (not (or (isAditField .Name) .IsQuery .NoGraphql .ViewerRefence))}}
 	{{- if .IsPrimitive}}
 	{{.GraphQLFormattedName}}: {{.GraphQLFortmattedType}}
 	{{- else}} 
 	{{.GraphQLFormattedName}}: {{.GraphQLFortmattedInputType}}
 	{{- end}}
+	{{- end}}
+	{{- end}}
+
+	{{- range .ReferedTypes}}
+	{{- if (not .IsViewerType)}}
+	{{.Name -}}ID: ID!
 	{{- end}}
 	{{- end}}
 }
@@ -89,7 +95,7 @@ input {{ title .Name -}}Input {
 input Update{{- title .Name -}}Input {
 	id: ID!
 	{{- range .Fields}}
-	{{- if (and .IsMutatable (not (or (isAditField .Name) .IsQuery .NoGraphql)))}}
+	{{- if (and .IsMutatable (not (or (isAditField .Name) .IsQuery .NoGraphql .ViewerRefence)))}}
 	{{- if .IsPrimitive}}
 	{{.GraphQLFormattedName}}: {{.GraphQLFortmattedType true}}
 	{{- else}} 

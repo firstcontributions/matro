@@ -45,22 +45,37 @@ type {{ title .Name}} struct {
 type Create{{- title .Name -}}Input struct {
 	{{- range .Fields}}
 	{{- if (not (or (isAditField .Name) .IsQuery))}}
-	{{- template "fieldDef" .}}
+	{{- template "inputFieldDef" .}}
 	{{- end}}
+	{{- end}}
+
+	{{- range .ReferedTypes}}
+	{{title .Name}}ID graphql.ID
 	{{- end}}
 }
 
-func (n *Create{{- title .Name -}}Input) ToModel() *{{- .Module.Store -}}.{{- title .Name}}{
+func (n *Create{{- title .Name -}}Input) ToModel() (*{{- .Module.Store -}}.{{- title .Name}}, error){
 	if n == nil {
-		return nil
+		return nil, nil
 	}
-	 return &{{- .Module.Store -}}.{{- title .Name}} {
+	{{- range .ReferedTypes}}
+	{{ .Name}}ID, err := ParseGraphqlID(n.{{- title .Name}}ID)
+	if err != nil {
+		return nil, err
+	}
+	{{- end}}
+	
+	return &{{- .Module.Store -}}.{{- title .Name}} {
 		{{- range .Fields }}
 		{{- if (not (or (isAditField .Name) .IsQuery))}}
 			{{- template "inputTypeField" .}}
 		{{- end}}
 		{{- end}}
-	}
+
+		{{- range .ReferedTypes}}
+		{{title .Name}}ID : {{- .Name}}ID.ID,
+		{{- end}}
+	}, nil
 }
 
 {{- if (and .IsNode .GraphqlOps.Update)}}
@@ -91,17 +106,17 @@ func (n *Update{{- title .Name -}}Input) ToModel() *{{- .Module.Store -}}.{{- ti
 {{- end}}
 
 {{- define "inputTypeField" }}
-{{- if  (not (or (and .IsJoinedData  .IsList) .NoGraphql))}}
+{{- if  (not (or (and .IsJoinedData  .IsList) .NoGraphql .ViewerRefence))}}
 	{{- if (and (not .IsJoinedData) (isCompositeType .Type))}}
-		{{.GoName}} :n.{{- .GoName }}.ToModel(),
+		{{.GoInputName}} :n.{{- .GoName }}.ToModel(),
 	{{- else}}
 		{{- if (eq .Type "int")}}
-			{{.GoName}} : int64(n.{{- .GoName }}), 
+			{{.GoInputName}} : int64(n.{{- .GoName }}), 
 		{{- else }}
 			{{- if (eq .Type "time")}}
-				{{.GoName}} : n.{{- .GoName }}.Time, 
+				{{.GoInputName}} : n.{{- .GoName }}.Time, 
 			{{- else}}
-				{{.GoName}} : n.{{- .GoName }}, 
+				{{.GoInputName}} : n.{{- .GoInputName }}, 
 			{{- end}}
 		{{- end}}
 	{{- end}}
@@ -111,6 +126,11 @@ func (n *Update{{- title .Name -}}Input) ToModel() *{{- .Module.Store -}}.{{- ti
 {{- define "fieldDef" }}
 	{{- if  (not (or (and .IsJoinedData  .IsList) .NoGraphql))}}
 	{{.GoName}} {{.GoType true}}
+	{{- end}}
+{{- end}}
+{{- define "inputFieldDef" }}
+	{{- if  (not (or (and .IsJoinedData  .IsList) .NoGraphql .ViewerRefence))}}
+	{{.GoInputName}} {{.GoType true}}
 	{{- end}}
 {{- end}}
 
@@ -159,9 +179,8 @@ func (n *{{ title .Name}}) ID(ctx context.Context) graphql.ID {
 {{- if  (and .IsJoinedData  (not .IsList))}}
 {{- $returntype := (getTypeFromMap $t.Types .Type )}}
 func (n *{{ title $t.Name}}) {{title .GoName}} (ctx context.Context) (*{{- title $returntype.Name}}, error) {
-	store := ctx.Value("store").(*Store)
 
-	data, err := store.{{- plural $returntype.Module.Name }}Store.Get{{- title $returntype.Name -}}ByID(ctx, n.{{- .GoName}})
+	data, err := storemanager.FromContext(ctx).{{- title (plural $returntype.Module.Name) }}Store.Get{{- title $returntype.Name -}}ByID(ctx, n.{{- .GoName}})
 	if err != nil {
 		return nil, err
 	}
@@ -226,15 +245,15 @@ func (n *{{title .Name}}) ToModel() *{{- .Module.Store -}}.{{- title .Name}}{
 		{{- range .Fields }}
 		{{- if  (not (or (and .IsJoinedData  .IsList) .NoGraphql))}}
 		{{- if (and (not .IsJoinedData) (isCompositeType .Type))}}
-		{{.GoName}} :n.{{- .GoName }}.ToModel(),
+		{{.GoInputName}} :n.{{- .GoName }}.ToModel(),
 		{{- else}}
 		{{- if (eq .Type "int")}}
-		{{.GoName}} : int64(n.{{- .GoName }}), 
+		{{.GoInputName}} : int64(n.{{- .GoName }}), 
 		{{- else }}
 		{{- if (eq .Type "time")}}
-		{{.GoName}} : n.{{- .GoName }}.Time, 
+		{{.GoInputName}} : n.{{- .GoName }}.Time, 
 		{{- else}}
-		{{.GoName}} : n.{{- .GoName }}, 
+		{{.GoInputName}} : n.{{- .GoInputName }}, 
 		{{- end}}
 		{{- end}}
 		{{- end}}

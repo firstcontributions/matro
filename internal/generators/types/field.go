@@ -24,6 +24,7 @@ type Field struct {
 	IsMutatable      bool
 	HardcodedFilters map[string]string
 	NoGraphql        bool
+	ViewerRefence    bool
 }
 
 // paginationArgs are the defualt pagination arguments should be
@@ -37,7 +38,7 @@ var paginationArgs = []Field{
 
 // TODO(@gokultp) clean up this function, make it more readable
 // NewField returns an instance of the field
-func NewField(typesMap map[string]*parser.Type, typeDef *parser.Type, name string) *Field {
+func NewField(d *parser.Definition, typesMap map[string]*parser.Type, typeDef *parser.Type, name string) *Field {
 
 	if typeDef.IsPrimitive() {
 		return &Field{
@@ -54,6 +55,7 @@ func NewField(typesMap map[string]*parser.Type, typeDef *parser.Type, name strin
 		IsPaginated:      typeDef.Paginated,
 		IsJoinedData:     typeDef.JoinedData,
 		HardcodedFilters: typeDef.HardcodedFilters,
+		ViewerRefence:    typeDef.ViewerRefence,
 	}
 	if typeDef.Schema == "" {
 		f.Type = typeDef.Name
@@ -111,6 +113,14 @@ func (f *Field) GoName(allExported ...bool) string {
 	}
 	if !exported && f.IsJoinedData {
 		return utils.ToCamelCase(f.Name)
+	}
+	return utils.ToTitleCase(f.Name)
+}
+
+// GoName return the field name to be used in go code
+func (f *Field) GoInputName(allExported ...bool) string {
+	if f.Name == "id" {
+		return "Id"
 	}
 	return utils.ToTitleCase(f.Name)
 }
@@ -192,6 +202,9 @@ func (f *Field) GraphQLFortmattedInputType(args ...bool) string {
 	if f.IsPaginated {
 		plType := pluralize.NewClient().Plural(f.Type)
 		t = fmt.Sprintf("%sConnection", utils.ToTitleCase(plType))
+	}
+	if f.IsJoinedData {
+		return "String!"
 	}
 	if f.IsList && !f.IsPaginated && IsCompositeType(f.Type) {
 		t = fmt.Sprintf("[%s]", t)

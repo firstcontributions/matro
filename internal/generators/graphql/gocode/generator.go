@@ -132,7 +132,7 @@ func (g *Generator) generateQueryResolver(ctx context.Context, q types.Query) er
 	return writer.CompileAndWrite(
 		ctx,
 		g.Path,
-		q.Name+"queryresolver.go",
+		q.Parent.Name+q.Name+"queryresolver.go",
 		queryResolverTmpl,
 		struct {
 			Query      types.Query
