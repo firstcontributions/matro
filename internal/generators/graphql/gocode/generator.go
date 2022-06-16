@@ -129,10 +129,14 @@ func (g *Generator) generateQueryResolver(ctx context.Context, q types.Query) er
 	} else {
 		return fmt.Errorf("could not find type defenition for type [%s]", typeName)
 	}
+	filename := q.Name + "queryresolver.go"
+	if q.Parent != nil {
+		filename = q.Parent.Name + filename
+	}
 	return writer.CompileAndWrite(
 		ctx,
 		g.Path,
-		q.Parent.Name+q.Name+"queryresolver.go",
+		filename,
 		queryResolverTmpl,
 		struct {
 			Query      types.Query

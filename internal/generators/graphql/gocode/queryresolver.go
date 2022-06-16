@@ -4,7 +4,7 @@ var queryResolverTmpl = `
 package schema
 
 {{- if (ne (len .Query.Args) 0)}}
-type {{ .Query.InputName -}}Input struct {
+type {{ .Query.InputName }} struct {
 	{{- $q := .Query}}
 	{{- range .Query.Args}}
 	{{- if (not (isHardCodedFilter $q.HardcodedFilters .Name))}}
@@ -15,9 +15,9 @@ type {{ .Query.InputName -}}Input struct {
 {{- end}}
 {{- if .Query.IsPaginated }}
 {{- if .Query.Parent }}
-func (n *{{- title .Query.Parent.Name -}}) {{title .Query.Name}}(ctx context.Context, in *{{ .Query.InputName -}}Input) (*{{.ReturnType.ConnectionName}}, error) {
+func (n *{{- title .Query.Parent.Name -}}) {{title .Query.Name}}(ctx context.Context, in *{{ .Query.InputName -}}) (*{{.ReturnType.ConnectionName}}, error) {
 {{- else }}
-func (r *Resolver) {{title .Query.Name}}(ctx context.Context, in *{{title .Query.Name -}}Input) (*{{.ReturnType.ConnectionName}}, error) {
+func (r *Resolver) {{title .Query.Name}}(ctx context.Context, in *{{title .Query.InputName -}}) (*{{.ReturnType.ConnectionName}}, error) {
 {{- end}}
 	var first, last *int64
 	if in.First != nil {
@@ -75,7 +75,7 @@ func (r *Resolver) {{title .Query.Name}}(ctx context.Context, {{- if (ne (len .Q
 	{{- end}}
 {{- end}}
 {{- range .ReturnType.ReferedTypes}}
-	{{- if (eq .Name $q.Parent.Name)}}
+	{{- if (and $q.Parent (eq .Name $q.Parent.Name))}}
 	n.ref,
 	{{- else}} 
 	nil,
