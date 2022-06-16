@@ -59,10 +59,12 @@ func (n *Create{{- title .Name -}}Input) ToModel() (*{{- .Module.Store -}}.{{- t
 		return nil, nil
 	}
 	{{- range .ReferedTypes}}
+	{{- if (not .IsViewerType)}}
 	{{ .Name}}ID, err := ParseGraphqlID(n.{{- title .Name}}ID)
 	if err != nil {
 		return nil, err
 	}
+	{{- end}}
 	{{- end}}
 	
 	return &{{- .Module.Store -}}.{{- title .Name}} {
@@ -73,7 +75,9 @@ func (n *Create{{- title .Name -}}Input) ToModel() (*{{- .Module.Store -}}.{{- t
 		{{- end}}
 
 		{{- range .ReferedTypes}}
+		{{- if (not .IsViewerType)}}
 		{{title .Name}}ID : {{- .Name}}ID.ID,
+		{{- end}}
 		{{- end}}
 	}, nil
 }
