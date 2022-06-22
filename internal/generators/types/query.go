@@ -20,12 +20,15 @@ func (q Query) InputName() string {
 	return fmt.Sprintf("%s%sInput", utils.ToTitleCase(q.Parent.Name), utils.ToTitleCase(q.Name))
 }
 
-func getQueries(d *parser.Definition, typesMap map[string]*parser.Type, queryModule parser.Module) ([]Query, map[string]*CompositeType) {
+func getQueries(d *parser.Definition, typesMap map[string]*parser.Type, queryModule parser.Module) ([]Query, map[string]*CompositeType, error) {
 	queries := []Query{}
 	graphQLOnlyTypes := map[string]*CompositeType{}
 	for _, q := range d.Queries {
 		if q.Schema == "" {
-			t := NewCompositeType(d, queryModule, typesMap, q)
+			t, err := NewCompositeType(d, queryModule, typesMap, q)
+			if err != nil {
+				return nil, nil, err
+			}
 			graphQLOnlyTypes[t.Name] = t
 			queries = append(queries, t.Queries()...)
 		}
@@ -35,5 +38,5 @@ func getQueries(d *parser.Definition, typesMap map[string]*parser.Type, queryMod
 			Field: field,
 		})
 	}
-	return queries, graphQLOnlyTypes
+	return queries, graphQLOnlyTypes, nil
 }

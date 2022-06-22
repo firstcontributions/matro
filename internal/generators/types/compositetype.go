@@ -43,7 +43,7 @@ type CompositeType struct {
 }
 
 // NewCompositeType return an instance of the CompositeType
-func NewCompositeType(d *parser.Definition, module parser.Module, typesMap map[string]*parser.Type, typeDef *parser.Type) *CompositeType {
+func NewCompositeType(d *parser.Definition, module parser.Module, typesMap map[string]*parser.Type, typeDef *parser.Type) (*CompositeType, error) {
 	fields := map[string]*Field{}
 	isNode := false
 	allRefered := true
@@ -63,7 +63,21 @@ func NewCompositeType(d *parser.Definition, module parser.Module, typesMap map[s
 		}
 	}
 	for _, mf := range typeDef.Meta.MutatableFields {
+		if _, ok := fields[mf]; !ok {
+			return nil, fmt.Errorf("could not find field definition for mutable field [%s], in type [%s]", mf, typeDef.Name)
+		}
 		fields[mf].IsMutatable = true
+	}
+
+	for _, field := range typeDef.Meta.SearchFields {
+		if _, ok := fields[field]; !ok {
+			return nil, fmt.Errorf("could not find field definition for search-field [%s], in type [%s]", field, typeDef.Name)
+		}
+	}
+	for _, field := range typeDef.Meta.Filters {
+		if _, ok := fields[field]; !ok {
+			return nil, fmt.Errorf("could not find field definition for filter-field [%s], in type [%s]", field, typeDef.Name)
+		}
 	}
 	return &CompositeType{
 		Name:             typeDef.Name,
@@ -79,7 +93,7 @@ func NewCompositeType(d *parser.Definition, module parser.Module, typesMap map[s
 		ReferedTypes:     map[string]*CompositeType{},
 		ParentTypes:      map[string]*CompositeType{},
 		IsViewerType:     typeDef.Name == d.Defaults.ViewerType,
-	}
+	}, nil
 }
 
 func (c *CompositeType) Queries() []Query {

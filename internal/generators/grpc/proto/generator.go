@@ -25,14 +25,13 @@ type Module struct {
 }
 
 // NewGenerator returns an instance of gRPC code generator
-func NewGenerator(path string, d *parser.Definition) *Generator {
-	td := types.NewTypeDefs(path, d)
+func NewGenerator(path string, d *parser.Definition, td *types.TypeDefs) *Generator {
 	mods := map[string]Module{}
 	for _, m := range d.Modules {
 		if m.DataSource == "grpc" {
 			mods[m.Name] = Module{
 				Module: m,
-				Types:  td.GetTypeDefs(m.Entities),
+				Types:  td.GetTypes(m.Entities),
 			}
 		}
 	}

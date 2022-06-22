@@ -3,25 +3,34 @@ package commands
 import (
 	"context"
 	"flag"
-	"fmt"
+	"io/fs"
+	"os"
 
 	"github.com/firstcontributions/matro/internal/generators"
 	"github.com/firstcontributions/matro/internal/generators/relayjs"
+	"github.com/firstcontributions/matro/internal/generators/types"
 	"github.com/firstcontributions/matro/internal/parser"
 	log "github.com/sirupsen/logrus"
 )
 
 // Relay is the command doing code generation
 type Relay struct {
+	*CommandWriter
 	flags    flag.FlagSet
 	filepath string
 	verbose  bool
 	help     bool
+	fs.FS
+	outputPath string
 }
 
 // NewRelay return a new instance of Relay
-func NewRelay() *Relay {
-	return &Relay{}
+func NewRelay(writer *CommandWriter) *Relay {
+	return &Relay{
+		CommandWriter: writer,
+		FS:            os.DirFS("."),
+		outputPath:    ".",
+	}
 }
 
 // InitFlags will initialize all flags
@@ -40,13 +49,14 @@ func (c *Relay) ParseFlags(args []string) {
 }
 
 // Help prints the help message
-func (Relay) Help() {
+func (r *Relay) Help() {
 	helpText := `
 	matro Relay  f [--file] <file path>
 	It generates all Relay side code
 	[vv] for verbose
+
 	`
-	fmt.Println(helpText)
+	r.Write(helpText)
 }
 
 // Exec will execute the core command functionality, here it Relays and saves the code
@@ -60,13 +70,22 @@ func (c *Relay) Exec() error {
 	} else {
 		log.SetLevel(log.FatalLevel)
 	}
-	d, err := parser.NewDefinition().ParseFromFile("./input.json")
+
+	matroConfigs, err := c.FS.Open(c.filepath)
+	if err != nil {
+		return err
+	}
+	d, err := parser.NewDefinition().ParseFrom(matroConfigs)
 	if err != nil {
 		return err
 	}
 	path := "."
+	typeDefs, err := types.GetTypeDefs(d)
+	if err != nil {
+		return err
+	}
 	generators := []generators.IGenerator{
-		relayjs.NewGenerator(path, d),
+		relayjs.NewGenerator(path, d, typeDefs),
 	}
 	ctx := context.Background()
 	for _, g := range generators {

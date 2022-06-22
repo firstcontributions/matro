@@ -2,6 +2,7 @@ package parser
 
 import (
 	"encoding/json"
+	"io"
 	"io/ioutil"
 )
 
@@ -27,8 +28,8 @@ func NewDefinition() *Definition {
 //
 // the duplicate return of object helps in chaining the functions like
 // NewDefinition().ParseFromFile
-func (d *Definition) ParseFromFile(path string) (*Definition, error) {
-	data, err := ioutil.ReadFile(path)
+func (d *Definition) ParseFrom(reader io.Reader) (*Definition, error) {
+	data, err := ioutil.ReadAll(reader)
 	if err != nil {
 		return d, err
 	}
