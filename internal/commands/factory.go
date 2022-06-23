@@ -1,5 +1,7 @@
 package commands
 
+import "os"
+
 // Command is the interface implemented by types
 type Command interface {
 	InitFlags()
@@ -9,17 +11,26 @@ type Command interface {
 }
 
 var (
-	server     = NewServer()
-	relay      = NewRelay()
-	helpCmd    = NewHelp()
-	versionCmd = NewVersionCmd()
+	server     *Server
+	relay      *Relay
+	helpCmd    *Help
+	versionCmd *VersionCmd
 )
 
 // initializes when package initializes
 func init() {
+	w := NewCommandWriter(os.Stdout)
+
+	server = NewServer(w)
 	server.InitFlags()
+
+	relay = NewRelay(w)
 	relay.InitFlags()
+
+	helpCmd = NewHelp(w)
 	helpCmd.InitFlags()
+
+	versionCmd = NewVersionCmd(w)
 	versionCmd.InitFlags()
 }
 

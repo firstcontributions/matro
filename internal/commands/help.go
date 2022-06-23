@@ -1,14 +1,15 @@
 package commands
 
-import "fmt"
-
 // Help is the help command
 type Help struct {
+	*CommandWriter
 }
 
 // NewHelp returns a new instalce of Help
-func NewHelp() *Help {
-	return &Help{}
+func NewHelp(writer *CommandWriter) *Help {
+	return &Help{
+		CommandWriter: writer,
+	}
 }
 
 //InitFlags initialises the flags if any
@@ -18,20 +19,21 @@ func (Help) InitFlags() {}
 func (Help) ParseFlags(args []string) {}
 
 // Help prints help text for the command, not needed here
-func (Help) Help() {
+func (h Help) Help() {
 	txt := `
 	matro help
 	Help command prints help
+
 	`
-	fmt.Println(txt)
+	h.Write(txt)
 }
 
 // Exec will print help text for envparser
 func (h Help) Exec() error {
-	fmt.Println("Usage")
+	h.Write("Usage\n")
 	h.Help()
-	NewServer().Help()
-	NewRelay().Help()
-	NewVersionCmd().Help()
+	NewServer(h.CommandWriter).Help()
+	NewRelay(h.CommandWriter).Help()
+	NewVersionCmd(h.CommandWriter).Help()
 	return nil
 }

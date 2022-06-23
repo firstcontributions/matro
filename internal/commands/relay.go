@@ -2,74 +2,54 @@ package commands
 
 import (
 	"context"
-	"flag"
-	"fmt"
 
 	"github.com/firstcontributions/matro/internal/generators"
 	"github.com/firstcontributions/matro/internal/generators/relayjs"
+	"github.com/firstcontributions/matro/internal/generators/types"
 	"github.com/firstcontributions/matro/internal/parser"
-	log "github.com/sirupsen/logrus"
 )
 
 // Relay is the command doing code generation
 type Relay struct {
-	flags    flag.FlagSet
-	filepath string
-	verbose  bool
-	help     bool
+	*CodeGenerator
 }
 
 // NewRelay return a new instance of Relay
-func NewRelay() *Relay {
-	return &Relay{}
-}
-
-// InitFlags will initialize all flags
-func (c *Relay) InitFlags() {
-	c.flags.StringVar(&c.filepath, "f", "matro.json", "file path")
-	c.flags.StringVar(&c.filepath, "file", "matro.json", "file path")
-	c.flags.BoolVar(&c.help, "h", false, "help")
-	c.flags.BoolVar(&c.help, "help", false, "help")
-	c.flags.BoolVar(&c.verbose, "vv", false, "verbose")
-
-}
-
-// ParseFlags will parse given flags
-func (c *Relay) ParseFlags(args []string) {
-	c.flags.Parse(args)
+func NewRelay(writer *CommandWriter) *Relay {
+	return &Relay{
+		NewCodeGenerator(writer),
+	}
 }
 
 // Help prints the help message
-func (Relay) Help() {
+func (c *Relay) Help() {
 	helpText := `
 	matro Relay  f [--file] <file path>
 	It generates all Relay side code
 	[vv] for verbose
+
 	`
-	fmt.Println(helpText)
+	c.Write(helpText)
+}
+
+// get genertors will return an instance of each server code generator
+func (c *Relay) getGenerators(d *parser.Definition, typeDefs *types.TypeDefs) []generators.IGenerator {
+	return []generators.IGenerator{
+		relayjs.NewGenerator(c.outputPath, d, typeDefs),
+	}
 }
 
 // Exec will execute the core command functionality, here it Relays and saves the code
 func (c *Relay) Exec() error {
-	if c.help {
-		c.Help()
+	if countinue := c.Setup(); !countinue {
 		return nil
 	}
-	if c.verbose {
-		log.SetLevel(log.DebugLevel)
-	} else {
-		log.SetLevel(log.FatalLevel)
-	}
-	d, err := parser.NewDefinition().ParseFromFile("./input.json")
+	d, typeDefs, err := c.GetDefenitionsAndTypes()
 	if err != nil {
 		return err
 	}
-	path := "."
-	generators := []generators.IGenerator{
-		relayjs.NewGenerator(path, d),
-	}
 	ctx := context.Background()
-	for _, g := range generators {
+	for _, g := range c.getGenerators(d, typeDefs) {
 		// will terminate all generations if any of the generators are
 		// throwing an error
 		if err := g.Generate(ctx); err != nil {

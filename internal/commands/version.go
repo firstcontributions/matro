@@ -1,7 +1,5 @@
 package commands
 
-import "fmt"
-
 var (
 	// Version is the build version eg: v1.0.0
 	Version string
@@ -13,11 +11,14 @@ var (
 
 // VersionCmd is the VersionCmd command
 type VersionCmd struct {
+	*CommandWriter
 }
 
 // NewVersionCmd returns a new instalce of VersionCmd
-func NewVersionCmd() *VersionCmd {
-	return &VersionCmd{}
+func NewVersionCmd(writer *CommandWriter) *VersionCmd {
+	return &VersionCmd{
+		CommandWriter: writer,
+	}
 }
 
 //InitFlags initialises the flags if any
@@ -27,19 +28,19 @@ func (VersionCmd) InitFlags() {}
 func (VersionCmd) ParseFlags(args []string) {}
 
 // Help prints VersionCmd text for the command, not needed here
-func (VersionCmd) Help() {
+func (v VersionCmd) Help() {
 	helpText := `
 	version
 	matro version 
 	
 	`
-	fmt.Println(helpText)
+	v.Write(helpText)
 }
 
 // Exec will print the build versionCmd details
-func (VersionCmd) Exec() error {
-	fmt.Println("Version :", Version)
-	fmt.Println("MinVersion :", MinVersion)
-	fmt.Println("BuildTime :", BuildTime)
+func (v VersionCmd) Exec() error {
+	v.Write("Version :", Version, "\n")
+	v.Write("MinVersion :", MinVersion, "\n")
+	v.Write("BuildTime :", BuildTime, "\n")
 	return nil
 }

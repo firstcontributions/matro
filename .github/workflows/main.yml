@@ -28,8 +28,11 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.16
+          go-version: 1.18
           
+      - name: GoImports
+        run: go install golang.org/x/tools/cmd/goimports@latest
+
       - name: Build
         run: go build -v ./...
 
@@ -37,15 +40,21 @@ jobs:
       # Runs a set of commands using the runners shell
       - name: Test Report
         run: |
-          mkdir -p github.com/firstcontributions
-          ln -s $(pwd) github.com/firstcontributions/matro
           export CC_TEST_REPORTER_ID=39cdf304b38debd4a46cf7f57d93c84eac785834dad0774d8300cb441afda869
           curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
           chmod +x ./cc-test-reporter
           ./cc-test-reporter before-build 
+
+          mkdir -p github.com/firstcontributions
+          ln -s $(pwd) github.com/firstcontributions/matro
+
+          export MATRO_PATH=./generated
+
+
           for pkg in $(go list ./... | grep -v main); do
               go test -coverprofile=$(echo $pkg | tr / -).cover $pkg
           done
+          
           echo "mode: set" > c.out
           grep -h -v "^mode:" ./*.cover >> c.out
           rm -f *.cover

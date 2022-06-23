@@ -19,8 +19,7 @@ type Generator struct {
 }
 
 // NewGenerator returns an instance of graphql server code generator
-func NewGenerator(path string, d *parser.Definition) *Generator {
-	td := types.NewTypeDefs(path, d)
+func NewGenerator(path string, d *parser.Definition, td *types.TypeDefs) *Generator {
 	return &Generator{
 		Path:     fmt.Sprintf("%s/internal/graphql/schema", path),
 		TypeDefs: td,

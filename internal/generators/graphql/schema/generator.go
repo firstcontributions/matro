@@ -16,8 +16,7 @@ type Generator struct {
 }
 
 // NewGenerator returns an instance of graphql schema generator
-func NewGenerator(path string, d *parser.Definition) *Generator {
-	td := types.NewTypeDefs(path, d)
+func NewGenerator(path string, d *parser.Definition, td *types.TypeDefs) *Generator {
 	return &Generator{
 		Path:     path,
 		TypeDefs: td,

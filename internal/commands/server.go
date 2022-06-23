@@ -2,8 +2,9 @@ package commands
 
 import (
 	"context"
-	"flag"
-	"fmt"
+
+	"github.com/firstcontributions/matro/internal/generators/types"
+	"github.com/firstcontributions/matro/internal/parser"
 
 	"github.com/firstcontributions/matro/internal/generators"
 	"github.com/firstcontributions/matro/internal/generators/gomod"
@@ -13,74 +14,55 @@ import (
 	"github.com/firstcontributions/matro/internal/generators/grpc/service"
 	"github.com/firstcontributions/matro/internal/generators/grpc/store"
 	"github.com/firstcontributions/matro/internal/generators/models/mongo"
-	"github.com/firstcontributions/matro/internal/parser"
-	"github.com/sirupsen/logrus"
 )
 
 // Server is the command doing code generation
 type Server struct {
-	flags    flag.FlagSet
-	filepath string
-	verbose  bool
-	help     bool
+	*CodeGenerator
 }
 
 // NewServer return a new instance of Server
-func NewServer() *Server {
-	return &Server{}
-}
-
-// InitFlags will initialize all flags
-func (c *Server) InitFlags() {
-	c.flags.StringVar(&c.filepath, "f", "matro.json", "file path")
-	c.flags.StringVar(&c.filepath, "file", "matro.json", "file path")
-	c.flags.BoolVar(&c.help, "h", false, "help")
-	c.flags.BoolVar(&c.help, "help", false, "help")
-	c.flags.BoolVar(&c.verbose, "vv", false, "verbose")
-}
-
-// ParseFlags will parse given flags
-func (c *Server) ParseFlags(args []string) {
-	c.flags.Parse(args)
+func NewServer(writer *CommandWriter) *Server {
+	return &Server{
+		NewCodeGenerator(writer),
+	}
 }
 
 // Help prints the help message
-func (Server) Help() {
+func (c *Server) Help() {
 	helpText := `
 	matro server  -f [--file] <file path>
 	It generates all server side code
 	[-vv] for verbose
+
 	`
-	fmt.Println(helpText)
+	c.Write(helpText)
 }
 
-// Exec will execute the core command functionality, here it Servers and saves the code
+// get genertors will return an instance of each server code generator
+func (c *Server) getGenerators(d *parser.Definition, typeDefs *types.TypeDefs) []generators.IGenerator {
+	return []generators.IGenerator{
+		gomod.NewGenerator(c.outputPath, d),
+		schema.NewGenerator(c.outputPath, d, typeDefs),
+		gocode.NewGenerator(c.outputPath, d, typeDefs),
+		proto.NewGenerator(c.outputPath, d, typeDefs),
+		store.NewGenerator(c.outputPath, d, typeDefs),
+		mongo.NewGenerator(c.outputPath, d, typeDefs),
+		service.NewGenerator(c.outputPath, d, typeDefs),
+	}
+}
+
+// Exec will execute the code generation for all given generators based on given configs
 func (c *Server) Exec() error {
-	if c.help {
-		c.Help()
+	if countinue := c.Setup(); !countinue {
 		return nil
 	}
-	if c.verbose {
-		logrus.SetLevel(logrus.DebugLevel)
-	} else {
-		logrus.SetLevel(logrus.FatalLevel)
-	}
-	d, err := parser.NewDefinition().ParseFromFile(c.filepath)
+	d, typeDefs, err := c.GetDefenitionsAndTypes()
 	if err != nil {
 		return err
 	}
-	path := "."
-	generators := []generators.IGenerator{
-		schema.NewGenerator(path, d),
-		gocode.NewGenerator(path, d),
-		proto.NewGenerator(path, d),
-		store.NewGenerator(path, d),
-		mongo.NewGenerator(path, d),
-		gomod.NewGenerator(path, d),
-		service.NewGenerator(path, d),
-	}
 	ctx := context.Background()
-	for _, g := range generators {
+	for _, g := range c.getGenerators(d, typeDefs) {
 		// will terminate all generations if any of the generators are
 		// throwing an error
 		if err := g.Generate(ctx); err != nil {

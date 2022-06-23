@@ -23,7 +23,7 @@ func FuncMap() template.FuncMap {
 		"empty": func(a []string) bool {
 			return len(a) == 0
 		},
-		"isElemOfStrArray": utils.IsElementOfStringArray,
+		"isElemOfStrArray": utils.IsElementOfArray[string],
 		"getTypeFromMap": func(m map[string]*types.CompositeType, t string) *types.CompositeType {
 			return m[t]
 		},

@@ -1,7 +1,10 @@
 package writer
 
 import (
+	"context"
+	"os"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -21,6 +24,7 @@ func TestNewGoWriter(t *testing.T) {
 				TextWriter: &TextWriter{
 					filename: "test.js",
 					path:     ".",
+					header:   autoGenText,
 				},
 			},
 		},
@@ -31,5 +35,25 @@ func TestNewGoWriter(t *testing.T) {
 				t.Errorf("NewGoWriter() = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestGoWriter_Format(t *testing.T) {
+	code := `package main
+	func main() {
+		fmt.Println("test")
+	}
+	`
+
+	w := NewGoWriter("/tmp", "main.go")
+	w.data = []byte(code)
+	ctx := context.TODO()
+	w.Write(ctx)
+	w.Format(ctx)
+
+	data, _ := os.ReadFile("/tmp/main.go")
+
+	if !strings.Contains(string(data), "import \"fmt\"") {
+		t.Errorf("code did not formatted as expected, check go-imports version")
 	}
 }
