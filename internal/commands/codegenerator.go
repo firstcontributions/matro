@@ -10,7 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// Code generator will act as a base class for all code generator commands
+// CodeGenerator will act as a base class for all code generator commands
 type CodeGenerator struct {
 	*CommandWriter
 	flags    flag.FlagSet
@@ -54,6 +54,7 @@ func (c *CodeGenerator) Help() {
 	c.Write(helpText)
 }
 
+// GetDefenitionsAndTypes will parse given config and return definitions and typedefs
 func (c *CodeGenerator) GetDefenitionsAndTypes() (*parser.Definition, *types.TypeDefs, error) {
 	matroConfigs, err := c.FS.Open(c.filepath)
 	if err != nil {
@@ -70,12 +71,12 @@ func (c *CodeGenerator) GetDefenitionsAndTypes() (*parser.Definition, *types.Typ
 	return d, typeDefs, nil
 }
 
-// Exec will execute the core command functionality, here it CodeGenerators and saves the code
+// Setup will setup log levels and help command
 func (c *CodeGenerator) Setup() bool {
 	if c.verbose {
 		logrus.SetLevel(logrus.DebugLevel)
 	} else {
-		logrus.SetLevel(logrus.FatalLevel)
+		logrus.SetLevel(logrus.ErrorLevel)
 	}
 	if c.help {
 		c.Help()

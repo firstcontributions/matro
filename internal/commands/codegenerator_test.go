@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	invalidJson   = `}{`
+	invalidJSON   = `}{`
 	invalidConfig = `{}`
 	validConfig   = `{
 		"repo": "github.com/firstcontributions/test-matro",
@@ -41,6 +41,18 @@ var (
 			}
 		]
 	}`
+
+	fsys = fstest.MapFS{
+		"valid_config.json": {
+			Data: []byte(validConfig),
+		},
+		"invalid_config.json": {
+			Data: []byte(invalidConfig),
+		},
+		"random.txt": {
+			Data: []byte(invalidJSON),
+		},
+	}
 )
 
 func TestCodeGenerator_Setup_Help(t *testing.T) {
@@ -79,7 +91,7 @@ func TestCodeGenerator_Setup_LogLevel(t *testing.T) {
 		{
 			name:         "log level should be fatal if verbose enabled",
 			verbose:      false,
-			wantLogLevel: logrus.FatalLevel,
+			wantLogLevel: logrus.ErrorLevel,
 		},
 	}
 	for _, tt := range tests {
@@ -96,17 +108,6 @@ func TestCodeGenerator_Setup_LogLevel(t *testing.T) {
 }
 
 func TestCodeGenerator_Exec(t *testing.T) {
-	fs := fstest.MapFS{
-		"valid_config.json": {
-			Data: []byte(validConfig),
-		},
-		"invalid_config.json": {
-			Data: []byte(invalidConfig),
-		},
-		"random.txt": {
-			Data: []byte(invalidJson),
-		},
-	}
 
 	tests := []struct {
 		name     string
@@ -137,7 +138,7 @@ func TestCodeGenerator_Exec(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &CodeGenerator{
 				filepath: tt.filepath,
-				FS:       fs,
+				FS:       fsys,
 			}
 			if _, _, err := c.GetDefenitionsAndTypes(); (err != nil) != tt.wantErr {
 				t.Errorf("Server.Exec() error = %v, wantErr %v", err, tt.wantErr)

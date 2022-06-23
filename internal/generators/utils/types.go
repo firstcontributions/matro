@@ -27,3 +27,13 @@ func Counter() func(...int) string {
 		return fmt.Sprint(count)
 	}
 }
+
+// IsElementOfArray implements on all comparable types, it checks if given item is part of the array
+func IsElementOfArray[T comparable](arr []T, item T) bool {
+	for _, elem := range arr {
+		if elem == item {
+			return true
+		}
+	}
+	return false
+}

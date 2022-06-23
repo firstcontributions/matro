@@ -21,7 +21,7 @@ type Server struct {
 	*CodeGenerator
 }
 
-// NewCodeGenerator return a new instance of CodeGenerator
+// NewServer return a new instance of Server
 func NewServer(writer *CommandWriter) *Server {
 	return &Server{
 		NewCodeGenerator(writer),
@@ -39,18 +39,20 @@ func (c *Server) Help() {
 	c.Write(helpText)
 }
 
+// get genertors will return an instance of each server code generator
 func (c *Server) getGenerators(d *parser.Definition, typeDefs *types.TypeDefs) []generators.IGenerator {
 	return []generators.IGenerator{
+		gomod.NewGenerator(c.outputPath, d),
 		schema.NewGenerator(c.outputPath, d, typeDefs),
 		gocode.NewGenerator(c.outputPath, d, typeDefs),
 		proto.NewGenerator(c.outputPath, d, typeDefs),
 		store.NewGenerator(c.outputPath, d, typeDefs),
 		mongo.NewGenerator(c.outputPath, d, typeDefs),
-		gomod.NewGenerator(c.outputPath, d),
 		service.NewGenerator(c.outputPath, d, typeDefs),
 	}
 }
 
+// Exec will execute the code generation for all given generators based on given configs
 func (c *Server) Exec() error {
 	if countinue := c.Setup(); !countinue {
 		return nil

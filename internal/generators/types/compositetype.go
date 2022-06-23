@@ -115,8 +115,8 @@ func (c *CompositeType) Mutatable() bool {
 }
 
 // EdgeFields return the paginated fields that can be an edge
-func (c *CompositeType) EdgeFields() *utils.Set {
-	s := utils.NewSet()
+func (c *CompositeType) EdgeFields() *utils.Set[string] {
+	s := utils.NewSet[string]()
 	for _, f := range c.Fields {
 		if f.IsPaginated && f.IsList {
 			s.Add(f.Type)

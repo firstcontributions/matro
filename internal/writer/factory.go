@@ -3,9 +3,6 @@ package writer
 import (
 	"context"
 	"strings"
-
-	"github.com/firstcontributions/matro/internal/ctxkeys"
-	"github.com/firstcontributions/matro/pkg/spinner"
 )
 
 // IWriter implements a code writer
@@ -31,15 +28,15 @@ func GetWriter(path, filename string) IWriter {
 	if getFileExtension(filename) == "go" {
 		return NewGoWriter(path, filename)
 	}
-	return NewTextWriter(path, filename)
+	return NewTextWriter(path, filename, "")
 }
 
-func getFileExtension(file string) string {
-	tmp := strings.Split(file, ".")
+func getFileExtension(filename string) string {
+	tmp := strings.Split(filename, ".")
 	if len(tmp) < 2 {
 		return ""
 	}
-	return tmp[1]
+	return tmp[len(tmp)-1]
 }
 
 // CompileAndWrite will compile the given template, autoformat
@@ -52,7 +49,6 @@ func CompileAndWrite(
 	data interface{},
 ) error {
 	w := GetWriter(path, filename)
-	// getSpinner(ctx).Update(fmt.Sprintf("%s/%s", path, filename))
 	if err := w.Compile(ctx, tmpl, data); err != nil {
 		return err
 	}
@@ -60,7 +56,4 @@ func CompileAndWrite(
 		return err
 	}
 	return w.Format(ctx)
-}
-func getSpinner(ctx context.Context) *spinner.Spinner {
-	return ctx.Value(ctxkeys.Spinner).(*spinner.Spinner)
 }

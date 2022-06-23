@@ -33,7 +33,7 @@ func GetTypeDefs(d *parser.Definition) (*TypeDefs, error) {
 		return nil, errors.ErrNoModules
 	}
 	types := []*CompositeType{}
-	edges := utils.NewSet()
+	edges := utils.NewSet[string]()
 	allTypesMap := getParsedTypesMap(d)
 	queriesModule := parser.Module{
 		Name: "queries",
@@ -69,7 +69,7 @@ func GetTypeDefs(d *parser.Definition) (*TypeDefs, error) {
 }
 
 // getTypeMap generated the <typeName><Type> map
-func getTypeMap(d *parser.Definition, types []*CompositeType, edges *utils.Set) map[string]*CompositeType {
+func getTypeMap(d *parser.Definition, types []*CompositeType, edges *utils.Set[string]) map[string]*CompositeType {
 	typeMap := map[string]*CompositeType{}
 	for _, t := range types {
 		if edges.IsElem(t.Name) {
