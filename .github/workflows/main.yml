@@ -50,13 +50,8 @@ jobs:
 
           export MATRO_PATH=./generated
 
+          go test -v -coverpkg=./... -coverprofile=c.out ./...
+          go tool cover -func c.out
 
-          for pkg in $(go list ./... | grep -v main); do
-              go test -coverprofile=$(echo $pkg | tr / -).cover $pkg
-          done
-          
-          echo "mode: set" > c.out
-          grep -h -v "^mode:" ./*.cover >> c.out
-          rm -f *.cover
 
           ./cc-test-reporter after-build

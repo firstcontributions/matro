@@ -23,11 +23,10 @@ func NewDefinition() *Definition {
 	return &Definition{}
 }
 
-// ParseFromFile parses the definitions from the given json file
+// ParseFrom parses the definitions from the given reader
 // returns an instance of the same object and error if any.
-//
 // the duplicate return of object helps in chaining the functions like
-// NewDefinition().ParseFromFile
+// NewDefinition().ParseFrom()
 func (d *Definition) ParseFrom(reader io.Reader) (*Definition, error) {
 	data, err := ioutil.ReadAll(reader)
 	if err != nil {

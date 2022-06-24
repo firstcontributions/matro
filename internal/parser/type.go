@@ -2,8 +2,10 @@ package parser
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
 	"strings"
+
+	"github.com/firstcontributions/matro/internal/merrors"
 )
 
 const (
@@ -24,10 +26,6 @@ const (
 	Object = "object"
 	// List defines list type schema for composite types
 	List = "list"
-)
-
-var (
-	errEmptyType = errors.New("Type can't be empty")
 )
 
 // Meta defines the data schema meta data properties
@@ -109,7 +107,7 @@ func validateTypeAndGetFirstNonEmptyIdx(b []byte) (int, error) {
 	// type cannont be an empty data
 	ln := len(b)
 	if ln == 0 {
-		return 0, errEmptyType
+		return 0, merrors.ErrEmptyType
 	}
 	// find the first non-space character
 	var i int
@@ -118,7 +116,7 @@ func validateTypeAndGetFirstNonEmptyIdx(b []byte) (int, error) {
 	}
 	if i == ln {
 		// cannot be empty string
-		return 0, errEmptyType
+		return 0, merrors.ErrEmptyType
 	}
 	return i, nil
 }
@@ -142,7 +140,7 @@ func (t *Type) UnmarshalJSON(b []byte) error {
 	// to the same func.
 
 	if err := json.Unmarshal(b, &t._Type); err != nil {
-		return err
+		return fmt.Errorf("error on unmarshalling, %w [%v]", merrors.ErrInvalidTypeDefinition, err)
 	}
 	return nil
 }
