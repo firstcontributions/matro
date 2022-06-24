@@ -3,8 +3,8 @@ package types
 import (
 	"fmt"
 
-	"github.com/firstcontributions/matro/internal/errors"
 	"github.com/firstcontributions/matro/internal/generators/utils"
+	"github.com/firstcontributions/matro/internal/merrors"
 	"github.com/firstcontributions/matro/internal/parser"
 )
 
@@ -30,7 +30,7 @@ func getParsedTypesMap(d *parser.Definition) map[string]*parser.Type {
 // GetTypeDefs get all typedefs from the parsed json schema
 func GetTypeDefs(d *parser.Definition) (*TypeDefs, error) {
 	if d.Modules == nil {
-		return nil, errors.ErrNoModules
+		return nil, merrors.ErrNoModules
 	}
 	types := []*CompositeType{}
 	edges := utils.NewSet[string]()
