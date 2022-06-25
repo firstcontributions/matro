@@ -220,3 +220,40 @@ func TestSet_Int_Iter(t *testing.T) {
 		})
 	}
 }
+
+func TestSet_Int_IsElem(t *testing.T) {
+	type args struct {
+		element int
+	}
+	tests := []struct {
+		name string
+		set  *Set[int]
+		args args
+		want bool
+	}{
+		{
+			name: "should return true if element is in set",
+			args: args{
+				element: 3,
+			},
+			set:  NewSet(1, 2, 3, 4, 5),
+			want: true,
+		},
+		{
+			name: "should return false if element is in set",
+			args: args{
+				element: 7,
+			},
+			set:  NewSet(1, 2, 3, 4, 5),
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			if isElem:= tt.set.IsElem(tt.args.element); isElem != tt.want {
+				t.Errorf("set.IsElem() expected = %v, got %v", isElem , tt.want)
+			}
+		})
+	}
+}
