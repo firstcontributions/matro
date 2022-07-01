@@ -17,3 +17,7 @@ type Module struct {
 func (m *Module) Store() string {
 	return fmt.Sprintf("%sstore", pluralize.NewClient().Plural(m.Name))
 }
+
+func (m *Module) Validate() error {
+	return nil
+}

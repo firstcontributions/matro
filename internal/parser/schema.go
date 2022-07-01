@@ -37,3 +37,7 @@ func (d *Definition) ParseFrom(reader io.Reader) (*Definition, error) {
 	}
 	return d, nil
 }
+
+func (d *Definition) Validate() error {
+	return nil
+}
