@@ -153,3 +153,40 @@ func (t *Type) IsPrimitive() bool {
 	}
 	return false
 }
+
+// Validate will validate parsed type
+func (t *Type) Validate() error {
+	if t.Type == "" {
+		return merrors.ErrEmptyType
+	}
+	if (t.Type == List || t.Type == Object) && t.Schema == "" && t.Properties == nil {
+		return merrors.ErrNoSchemaDefinedForCustomType
+	}
+	if (t.Type == List || t.Type == Object) && t.Properties != nil && t.Name == "" {
+		return merrors.ErrNoNameForInlineCustomTypes
+	}
+	for _, f := range t.Meta.SearchFields {
+		if _, found := t.Properties[f]; !found {
+			return fmt.Errorf("%w field: %v", merrors.ErrUndefinedSearchField, f)
+		}
+	}
+	if err := t.raiseErrorIfFieldsNotDefined(t.Meta.SearchFields, merrors.ErrUndefinedSearchField); err != nil {
+		return err
+	}
+	if err := t.raiseErrorIfFieldsNotDefined(t.Meta.MutatableFields, merrors.ErrUndefinedMutableField); err != nil {
+		return err
+	}
+	if err := t.raiseErrorIfFieldsNotDefined(t.Meta.Filters, merrors.ErrUndefinedFilter); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (t *Type) raiseErrorIfFieldsNotDefined(fields []string, err error) error {
+	for _, f := range fields {
+		if _, found := t.Properties[f]; !found {
+			return fmt.Errorf("field: %v [%w]", f, err)
+		}
+	}
+	return nil
+}

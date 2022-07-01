@@ -408,3 +408,145 @@ func TestType_UnmarshalJSON(t *testing.T) {
 		})
 	}
 }
+
+func TestType_Validate(t *testing.T) {
+
+	tests := []struct {
+		name    string
+		t       *Type
+		wantErr error
+	}{
+		{
+			name:    "type name cannot be empty",
+			t:       &Type{},
+			wantErr: merrors.ErrEmptyType,
+		},
+		{
+			name:    "custom type should have a schema or properties",
+			t:       &Type{_Type: _Type{Type: "list"}},
+			wantErr: merrors.ErrNoSchemaDefinedForCustomType,
+		},
+		{
+			name: "type name cannot be empty",
+			t: &Type{_Type: _Type{
+				Type: "list",
+				Properties: map[string]*Type{
+					"id": {_Type: _Type{Type: "id"}},
+				},
+			}},
+			wantErr: merrors.ErrNoNameForInlineCustomTypes,
+		},
+		{
+			name: "should report undefined search fields",
+			t: &Type{_Type: _Type{
+				Name: "user",
+				Type: "list",
+				Meta: Meta{
+					SearchFields: []string{"name"},
+				},
+				Properties: map[string]*Type{
+					"id": {_Type: _Type{Type: "id"}},
+				},
+			}},
+			wantErr: merrors.ErrUndefinedSearchField,
+		},
+		{
+			name: "should report undefined filter fields",
+			t: &Type{_Type: _Type{
+				Name: "user",
+				Type: "list",
+				Meta: Meta{
+					Filters: []string{"name"},
+				},
+				Properties: map[string]*Type{
+					"id": {_Type: _Type{Type: "id"}},
+				},
+			}},
+			wantErr: merrors.ErrUndefinedFilter,
+		},
+		{
+			name: "should report undefined mutable fields",
+			t: &Type{_Type: _Type{
+				Name: "user",
+				Type: "list",
+				Meta: Meta{
+					MutatableFields: []string{"name"},
+				},
+				Properties: map[string]*Type{
+					"id": {_Type: _Type{Type: "id"}},
+				},
+			}},
+			wantErr: merrors.ErrUndefinedMutableField,
+		},
+		{
+			name: "should not raise any errors if all the given fields are defined",
+			t: &Type{
+				_Type: _Type{
+					Name: "user",
+					Type: "list",
+					Meta: Meta{
+						MutatableFields: []string{"id"},
+					},
+					Properties: map[string]*Type{
+						"id": {_Type: _Type{Type: "id"}},
+					},
+				},
+			},
+			wantErr: nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			if err := tt.t.Validate(); !errors.Is(err, tt.wantErr) {
+				t.Errorf("Type.Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestType_raiseErrorIfFieldsNotDefined(t *testing.T) {
+
+	type args struct {
+		fields []string
+		err    error
+	}
+	tests := []struct {
+		name    string
+		t       *Type
+		args    args
+		wantErr error
+	}{
+		{
+			name: "should not raise any errors if all the given fields are defined",
+			t: &Type{
+				_Type: _Type{
+					Properties: map[string]*Type{
+						"id": {_Type: _Type{Type: "id"}},
+					},
+				},
+			},
+			args: args{
+				fields: []string{"id"},
+				err:    merrors.ErrUndefinedFilter,
+			},
+			wantErr: nil,
+		},
+		{
+			name: "should raise given error if field not defined",
+			t:    &Type{},
+			args: args{
+				fields: []string{"name"},
+				err:    merrors.ErrUndefinedFilter,
+			},
+			wantErr: merrors.ErrUndefinedFilter,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := tt.t.raiseErrorIfFieldsNotDefined(tt.args.fields, tt.args.err); !errors.Is(err, tt.wantErr) {
+				t.Errorf("Type.raiseErrorIfFieldsNotDefined() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
