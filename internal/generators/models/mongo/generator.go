@@ -76,7 +76,7 @@ func (g *Generator) Generate(ctx context.Context) error {
 				continue
 			}
 			if t.IsNode {
-				if err := g.generateModel(ctx, m.Name, t); err != nil {
+				if err := g.generateModel(ctx, t); err != nil {
 					return err
 				}
 			}
@@ -142,19 +142,17 @@ func (g *Generator) generateMongoStore(ctx context.Context, m Module) error {
 // supported operations:
 // Create, GetAll(search, filter, pagination),
 // GetByID, Update, Delete
-func (g *Generator) generateModel(ctx context.Context, module string, typ *types.CompositeType) error {
+func (g *Generator) generateModel(ctx context.Context, typ *types.CompositeType) error {
 
 	return writer.CompileAndWrite(
 		ctx,
-		fmt.Sprintf("%s/internal/models/%sstore/mongo", g.Path, module),
+		fmt.Sprintf("%s/internal/models/%sstore/mongo", g.Path, typ.Module.Name),
 		typ.Name+".go",
 		crudTpl,
 		struct {
-			Module string
 			*types.CompositeType
 			Repo string
 		}{
-			Module:        module,
 			CompositeType: typ,
 			Repo:          g.Repo,
 		},

@@ -34,11 +34,13 @@ var paginationArgs = []Field{
 	{Name: "last", Type: parser.Int},
 	{Name: "after", Type: parser.String},
 	{Name: "before", Type: parser.String},
+	{Name: "sort_by", Type: parser.String},
+	{Name: "sort_order", Type: parser.String},
 }
 
 // TODO(@gokultp) clean up this function, make it more readable
 // NewField returns an instance of the field
-func NewField(d *parser.Definition, typesMap map[string]*parser.Type, typeDef *parser.Type, name string) *Field {
+func NewField(d *parser.Definition, typesMap map[string]*parser.Type, typeDef *parser.Type, name string, isViewerReferece bool) *Field {
 
 	if typeDef.IsPrimitive() {
 		return &Field{
@@ -55,7 +57,7 @@ func NewField(d *parser.Definition, typesMap map[string]*parser.Type, typeDef *p
 		IsPaginated:      typeDef.Paginated,
 		IsJoinedData:     typeDef.JoinedData,
 		HardcodedFilters: typeDef.HardcodedFilters,
-		ViewerRefence:    typeDef.ViewerRefence,
+		ViewerRefence:    isViewerReferece,
 	}
 	if typeDef.Schema == "" {
 		f.Type = typeDef.Name

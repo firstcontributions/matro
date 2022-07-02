@@ -30,10 +30,12 @@ const (
 
 // Meta defines the data schema meta data properties
 type Meta struct {
-	SearchFields    []string `json:"search_fields"`
-	Filters         []string `json:"filters"`
-	GraphqlOps      Ops      `json:"graphql_ops"`
-	MutatableFields []string `json:"mutatable_fields"`
+	SearchFields       []string `json:"search_fields"`
+	Filters            []string `json:"filters"`
+	GraphqlOps         Ops      `json:"graphql_ops"`
+	MutatableFields    []string `json:"mutatable_fields"`
+	SortBy             []string `json:"sort_by"`
+	ViewerRefenceField string   `json:"viewer_reference_field"`
 }
 
 // Ops defines the supported graphql CRUD operations
@@ -99,7 +101,6 @@ type _Type struct {
 	Meta             Meta              `json:"meta"`
 	HardcodedFilters map[string]string `json:"hardcoded_filters"`
 	NoGraphql        bool              `json:"no_graphql"`
-	ViewerRefence    bool              `json:"viewer_reference"`
 }
 
 // validateTypeAndGetFirstNonEmptyIdx validates the given type string binary
@@ -177,6 +178,9 @@ func (t *Type) Validate() error {
 		return err
 	}
 	if err := t.raiseErrorIfFieldsNotDefined(t.Meta.Filters, merrors.ErrUndefinedFilter); err != nil {
+		return err
+	}
+	if err := t.raiseErrorIfFieldsNotDefined(t.Meta.SortBy, merrors.ErrUndefinedSortField); err != nil {
 		return err
 	}
 	return nil

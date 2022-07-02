@@ -8,10 +8,32 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/bson"
 	"github.com/gokultp/go-mongoqb"
-	"{{- .Repo -}}/internal/models/{{- .Module -}}store"
+	"{{- .Repo -}}/internal/models/{{- .Module.Store -}}"
 )
+func {{ .Name -}}FiltersToQuery(filters *{{ .Module.Store -}}. {{- title .Name -}}Filters) *mongoqb.QueryBuilder {
+	qb := mongoqb.NewQueryBuilder()
+	if len(filters.Ids) > 0 {
+		qb.In("_id", filters.Ids)
+	}
+	{{- range .Filters }}
+	if filters.{{- title .}} != nil {
+		qb.Eq("{{- . -}}", filters.{{- title .}})
+	}
+	{{- end }}
 
-func (s *{{- title .Module -}}Store) Create{{- title .Name -}} (ctx context.Context, {{.Name}} *{{-  .Module -}}store. {{- title .Name}}) (* {{ .Module -}}store. {{- title .Name}}, error) {
+	{{- range .ReferedTypes }}
+		if filters.{{- title .Name -}} != nil {
+			qb.Eq("{{- .Name -}}_id", filters.{{- title .Name -}}.Id)
+		}
+	{{- end }}
+	{{- if not (empty .SearchFields)}}
+	if filters.Search != nil {
+		qb.Search(*filters.Search)
+	}
+	{{- end}}
+	return qb
+}
+func (s *{{- title .Module.Name -}}Store) Create{{- title .Name -}} (ctx context.Context, {{.Name}} *{{-  .Module.Store -}}. {{- title .Name}}) (* {{ .Module.Store -}}. {{- title .Name}}, error) {
 	now := time.Now()
 	{{.Name -}}.TimeCreated = now
 	{{.Name -}}.TimeUpdated = now
@@ -26,10 +48,10 @@ func (s *{{- title .Module -}}Store) Create{{- title .Name -}} (ctx context.Cont
 	return {{ .Name}}, nil
 }
 
-func (s *{{- title .Module -}}Store) Get{{- title .Name -}}ByID (ctx context.Context, id string) (* {{ .Module -}}store. {{- title .Name}}, error) {
+func (s *{{- title .Module.Name -}}Store) Get{{- title .Name -}}ByID (ctx context.Context, id string) (* {{ .Module.Store -}}. {{- title .Name}}, error) {
 	qb := mongoqb.NewQueryBuilder().
 			Eq("_id", id)
-	var {{.Name}} {{ .Module -}}store. {{- title .Name}}
+	var {{.Name}} {{ .Module.Store -}}. {{- title .Name}}
 	if err := s.getCollection(Collection{{title (plural .Name)}}).FindOne(ctx, qb.Build()).Decode(&{{- .Name -}}); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return nil, nil
@@ -39,45 +61,49 @@ func (s *{{- title .Module -}}Store) Get{{- title .Name -}}ByID (ctx context.Con
 	return &{{- .Name}}, nil
 }
 
-func (s *{{- title .Module -}}Store) Get{{- title (plural .Name) -}} (
+func (s *{{- title .Module.Name -}}Store) GetOne{{- title .Name -}} (ctx context.Context, filters *{{ .Module.Store -}}. {{- title .Name -}}Filters) (* {{ .Module.Store -}}. {{- title .Name}}, error) {
+	qb := {{ .Name -}}FiltersToQuery(filters)
+	var {{.Name}} {{ .Module.Store -}}. {{- title .Name}}
+	if err := s.getCollection(Collection{{title (plural .Name)}}).FindOne(ctx, qb.Build()).Decode(&{{- .Name -}}); err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &{{- .Name}}, nil
+}
+
+func (s *{{- title .Module.Name -}}Store) Count{{- title (plural .Name) -}} (ctx context.Context, filters *{{ .Module.Store -}}. {{- title .Name -}}Filters) (
+	int64,
+	error,
+) {
+	qb := {{ .Name -}}FiltersToQuery(filters)
+	
+	count, err := s.getCollection(Collection{{title (plural .Name)}}).CountDocuments(ctx, qb.Build())
+	if  err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+func (s *{{- title .Module.Name -}}Store) Get{{- title (plural .Name) -}} (
 	ctx context.Context,
-	ids []string,
-	{{- if not (empty .SearchFields)}}
-	search *string,
-	{{- end}}
-	{{- template "getargs" . }}
+	filters *{{ .Module.Store -}}. {{- title .Name -}}Filters,
 	after *string,
 	before *string,
 	first  *int64, 
 	last  *int64,
+	sortBy *string, 
+	sortOrder *string,
 ) (
-	[]*{{ .Module -}}store. {{- title .Name}}, 
+	[]*{{ .Module.Store -}}. {{- title .Name}}, 
 	bool,
 	bool,
 	string,
 	string,
 	error,
 ) {
-	qb := mongoqb.NewQueryBuilder()
-	if len(ids) > 0 {
-		qb.In("_id", ids)
-	}
-	{{- range .Filters }}
-	if {{ camel .}} != nil {
-		qb.Eq("{{- . -}}", {{ camel .}})
-	}
-	{{- end }}
-
-	{{- range .ReferedTypes }}
-		if {{.Name -}} != nil {
-			qb.Eq("{{- .Name -}}_id", {{.Name -}}.Id)
-		}
-	{{- end }}
-	{{- if not (empty .SearchFields)}}
-	if search != nil {
-		qb.Search(*search)
-	}
-	{{- end}}
+	qb := {{ .Name -}}FiltersToQuery(filters)
 	
 	limit, order, cursorStr := utils.GetLimitAndSortOrderAndCursor(first, last, after, before)
 	var c *cursor.Cursor
@@ -85,26 +111,25 @@ func (s *{{- title .Module -}}Store) Get{{- title (plural .Name) -}} (
 		c = cursor.FromString(*cursorStr)
 		if c != nil {
 			if order == 1 {
-				qb.Lte("time_created", c.TimeStamp)
+				qb.Lte("time_created", c.OffsetValue)
 				qb.Lte("_id", c.ID)
 			} else {
-				qb.Gte("time_created", c.TimeStamp)
+				qb.Gte("time_created", c.OffsetValue)
 				qb.Gte("_id", c.ID)
 			}
 		}
 	}
-	sortOrder := utils.GetSortOrder(order)
 	// incrementing limit by 2 to check if next, prev elements are present
 	limit += 2
 	options := &options.FindOptions{
 		Limit: &limit,
-		Sort:  sortOrder,
+		Sort:  utils.GetSortOrder(sortBy, sortOrder, order),
 	}
 
 	var firstCursor, lastCursor string
 	var hasNextPage, hasPreviousPage bool
 
-	var {{plural .Name}} []*{{ .Module -}}store. {{- title .Name}}
+	var {{plural .Name}} []*{{ .Module.Store -}}. {{- title .Name}}
 	mongoCursor, err := s.getCollection(Collection{{title (plural .Name)}}).Find(ctx, qb.Build(), options)
 	if  err != nil {
 		return nil, hasNextPage, hasPreviousPage, firstCursor, lastCursor, err
@@ -133,16 +158,18 @@ func (s *{{- title .Module -}}Store) Get{{- title (plural .Name) -}} (
 	}
 
 	if  count > 0 {
-		firstCursor = cursor.NewCursor({{ plural .Name -}}[0].Id, {{ plural .Name -}}[0].TimeCreated).String()
-		lastCursor = cursor.NewCursor({{ plural .Name -}}[count-1].Id, {{ plural .Name -}}[count-1].TimeCreated).String()
+		firstCursor = cursor.NewCursor({{ plural .Name -}}[0].Id, "time_created", {{ plural .Name -}}[0].TimeCreated).String()
+		lastCursor = cursor.NewCursor({{ plural .Name -}}[count-1].Id,  "time_created",  {{ plural .Name -}}[count-1].TimeCreated).String()
 	}
 	if order < 0 {
 		hasNextPage, hasPreviousPage = hasPreviousPage, hasNextPage
 		firstCursor, lastCursor = lastCursor, firstCursor
+		{{ plural .Name}} = utils.ReverseList({{ plural .Name}})
 	}
 	return {{ plural .Name}}, hasNextPage, hasPreviousPage, firstCursor, lastCursor, nil
 }
-func (s *{{- title .Module -}}Store) Update{{- title .Name -}} (ctx context.Context, id string, {{.Name -}}Update *{{-  .Module -}}store. {{- title .Name -}}Update) (error) {
+
+func (s *{{- title .Module.Name -}}Store) Update{{- title .Name -}} (ctx context.Context, id string, {{.Name -}}Update *{{-  .Module.Store -}}. {{- title .Name -}}Update) (error) {
 	qb := mongoqb.NewQueryBuilder().
 			Eq("_id", id)
 
@@ -162,7 +189,7 @@ func (s *{{- title .Module -}}Store) Update{{- title .Name -}} (ctx context.Cont
 	return nil
 }
 
-func (s *{{- title .Module -}}Store) Delete{{- title .Name -}}ByID (ctx context.Context, id string) (error) {
+func (s *{{- title .Module.Name -}}Store) Delete{{- title .Name -}}ByID (ctx context.Context, id string) (error) {
 	qb := mongoqb.NewQueryBuilder().
 			Eq("_id", id)
 	if _,  err := s.getCollection(Collection{{title (plural .Name)}}).DeleteOne(ctx, qb.Build()); err != nil {
@@ -170,14 +197,4 @@ func (s *{{- title .Module -}}Store) Delete{{- title .Name -}}ByID (ctx context.
 	}
 	return nil
 }
-
-{{- define "getargs"}}
-{{- $t := .}}
-{{- range .ReferedTypes }}
-	{{.Name -}} *{{.Module.Store -}}.{{- title .Name}},
-{{- end }}
-{{- range .Filters}}
-	{{ camel .}} *{{$t.FieldType .}},
-{{- end}}
-{{- end}}
 `

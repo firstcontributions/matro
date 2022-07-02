@@ -32,7 +32,7 @@ func getQueries(d *parser.Definition, typesMap map[string]*parser.Type, queryMod
 			graphQLOnlyTypes[t.Name] = t
 			queries = append(queries, t.Queries()...)
 		}
-		field := NewField(d, typesMap, q, q.Name)
+		field := NewField(d, typesMap, q, q.Name, false)
 		field.IsQuery = true
 		queries = append(queries, Query{
 			Field: field,

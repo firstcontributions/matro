@@ -199,11 +199,12 @@ func (n *{{ title $t.Name}}) {{title .GoName}} (ctx context.Context) (*{{- title
 type {{.ConnectionName}} struct {
 	Edges []* {{- .EdgeName}}
 	PageInfo *PageInfo
+	filters *{{- .Module.Name -}}store.{{- title .Name -}}Filters
 }
 
-
 func New{{.ConnectionName}}(
-	data []*{{- .Module.Name -}}store.{{- title .Name}},
+	filters *{{- .Module.Store -}}.{{- title .Name -}}Filters,
+	data []*{{- .Module.Store -}}.{{- title .Name}},
 	hasNextPage bool,
 	hasPreviousPage bool,
 	firstCursor *string, 
@@ -218,11 +219,12 @@ func New{{.ConnectionName}}(
 			{{- if (eq .Module.DB "")}}
 			Cursor: d.Cursor,
 			{{- else}}
-			Cursor: cursor.NewCursor(d.Id, d.TimeCreated).String(),
+			Cursor: cursor.NewCursor(d.Id, "time_created", d.TimeCreated).String(),
 			{{- end}}
 		})
 	}
 	return &{{.ConnectionName}} {
+		filters: filters,
 		Edges: edges,
 		PageInfo: &PageInfo{
 			HasNextPage : hasNextPage,
@@ -232,6 +234,30 @@ func New{{.ConnectionName}}(
 		},
 	}
 }
+
+func (c {{.ConnectionName}}) TotalCount (ctx context.Context) (int32, error) {
+	count, err := storemanager.FromContext(ctx).{{- title (plural .Module.Name) }}Store.Count{{- plural (title .Name) -}}(ctx, c.filters)
+	return int32(count), err
+}
+
+{{- if (ne .ViewerRefenceField "") }}
+func (c {{.ConnectionName}}) HasViewerAssociation (ctx context.Context) (bool, error) {
+	session := session.FromContext(ctx)
+	if session == nil {
+		return false, errors.New("Unauthorized")
+	}
+	userID := session.UserID()
+
+	newFilter := *c.filters
+	newFilter.{{- title .ViewerRefenceField}} = &userID
+
+	data, err := storemanager.FromContext(ctx).{{- title (plural .Module.Name) }}Store.GetOne{{- title .Name -}}(ctx, c.filters)
+	if err != nil {
+		return false, err
+	}
+	return data != nil, nil
+}
+{{- end}}
 
 type {{.EdgeName}} struct {
 	Node *{{- title .Name}}
