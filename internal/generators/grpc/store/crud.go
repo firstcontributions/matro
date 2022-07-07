@@ -7,7 +7,6 @@ import (
 	"context"
 	"{{- .Repo -}}/internal/models/{{- .Module -}}store"
 	"{{- .Repo -}}/internal/grpc/{{- plural .Module -}}/proto"
-
 )
 
 

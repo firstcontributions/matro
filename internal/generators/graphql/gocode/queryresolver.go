@@ -35,56 +35,64 @@ func (r *Resolver) {{title .Query.Name}}(ctx context.Context, in *{{title .Query
 	{{camel .Name}} :=  {{ getHardcodedValue $q.HardcodedFilters .Name .Type}}
 		{{- end}}
 	{{- end}}
+
+	filters := &{{.ReturnType.Module.Store -}}.{{- title .ReturnType.Name -}}Filters{
+		{{- template "getargs" . }}
+	}
 	data, hasNextPage, hasPreviousPage, firstCursor, lastCursor, err :=  store.{{- title .ReturnType.Module.Name -}}Store.Get{{- plural (title .ReturnType.Name)}} (
 		ctx,
-		{{- template "getargs" .}}
+		filters,
+		in.After,
+		in.Before,
+		first,
+		last, 
+		in.SortBy,
+		in.SortOrder,
 	)
 	if err != nil {
 		return nil, err
 	}
-	return New{{- .ReturnType.ConnectionName}}(data, hasNextPage, hasPreviousPage, &firstCursor, &lastCursor), nil
+	return New{{- .ReturnType.ConnectionName}}(filters, data, hasNextPage, hasPreviousPage, &firstCursor, &lastCursor), nil
 }
 {{- else}} 
 {{- if .Query.Parent }}
-func (n *{{- title .Query.Parent.Name -}}) {{title .Query.Name}}(ctx context.Context{{- if (ne (len .Query.Args) 0)}}, in *{{title .Query.Name -}}Input {{- end}}) (*{{- title .ReturnType.Name}}, error) {
+func (n *{{- title .Query.Parent.Name -}}) {{title .Query.Name}}(ctx context.Context {{- if (ne (len .Query.Args) 0)}}, in *{{title .Query.Name -}}Input {{- end}}) (*{{- title .ReturnType.Name}}, error) {
 {{- else }}
-func (r *Resolver) {{title .Query.Name}}(ctx context.Context, {{- if (ne (len .Query.Args) 0)}}, in *{{title .Query.Name -}}Input {{- end}}) (*{{- title .ReturnType.Name }}, error) {
+func (r *Resolver) {{title .Query.Name}}(ctx context.Context {{- if (ne (len .Query.Args) 0)}}, in *{{title .Query.Name -}}Input {{- end}}) (*{{- title .ReturnType.Name }}, error) {
 {{- end}}
-	return New{{- title .ReturnType.Name }}(), nil
+	
+	filters := &{{.ReturnType.Module.Store -}}.{{- title .ReturnType.Name -}}Filters{
+		{{- template "getargs" . }}
+	}
+	store := storemanager.FromContext(ctx)
+	{{.ReturnType.Name }}, err := store.{{- title .ReturnType.Module.Name -}}Store.GetOne{{- title .ReturnType.Name}}(ctx, filters)
+	if err != nil {
+		return nil, err
+	}
+	return New{{- title .ReturnType.Name }}({{.ReturnType.Name }}), nil
 }
 {{- end}}
 
 {{- define "getargs"}}
-{{- $q := .Query}}
+{{- $q := .Query -}}
 {{- if (isElemOfStrArray ($q.ArgNames) "ids")}}
-	in.Ids,
-{{- else}}
-	nil,
-{{- end}}
-{{- if not (empty .ReturnType.SearchFields)}}
-	nil,
+	Ids: in.Ids,
 {{- end}}
 {{- $t := .}}
 {{- range $q.Args}}
 	{{- if (isElemOfStrArray ($t.ReturnType.Filters) .Name)}}
 		{{- if (isHardCodedFilter $q.HardcodedFilters .Name)}}
-		&{{- camel .Name}},
+		{{title .Name}} : &{{- camel .Name}},
 		{{- else}}
-		in.{{- title .Name}},
+		{{title .Name}} :in.{{- title .Name}},
 		{{- end}}
 	{{- end}}
 {{- end}}
 {{- range .ReturnType.ReferedTypes}}
 	{{- if (and $q.Parent (eq .Name $q.Parent.Name))}}
-	n.ref,
-	{{- else}} 
-	nil,
+	{{title .Name}}: n.ref,
 	{{- end}}
 {{- end}}
-	in.After,
-	in.Before,
-	first,
-	last, 
 {{- end}}
 
 `

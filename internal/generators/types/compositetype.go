@@ -25,21 +25,23 @@ var auditFields = []*Field{
 // CompositeType defines a non trivial type with a set
 // of informations like what all fields, opeations supported, etc.
 type CompositeType struct {
-	Name             string
-	Fields           map[string]*Field
-	ReferedTypes     map[string]*CompositeType
-	ParentTypes      map[string]*CompositeType
-	IsNode           bool
-	IsEdge           bool
-	Filters          []string
-	GraphqlOps       parser.Ops
-	SearchFields     []string
-	MutatableFields  []string
-	Module           *parser.Module
-	AllReferedFields bool
-	HardcodedFilters map[string]string
-	NoGraphql        bool
-	IsViewerType     bool
+	Name               string
+	Fields             map[string]*Field
+	ReferedTypes       map[string]*CompositeType
+	ParentTypes        map[string]*CompositeType
+	IsNode             bool
+	IsEdge             bool
+	Filters            []string
+	GraphqlOps         parser.Ops
+	SearchFields       []string
+	MutatableFields    []string
+	SortBy             []string
+	Module             *parser.Module
+	AllReferedFields   bool
+	HardcodedFilters   map[string]string
+	NoGraphql          bool
+	IsViewerType       bool
+	ViewerRefenceField string
 }
 
 // NewCompositeType return an instance of the CompositeType
@@ -51,7 +53,7 @@ func NewCompositeType(d *parser.Definition, module parser.Module, typesMap map[s
 		if field == "id" {
 			isNode = true
 		}
-		f := NewField(d, typesMap, def, field)
+		f := NewField(d, typesMap, def, field, typeDef.Meta.ViewerRefenceField == field)
 		fields[field] = f
 		if !(f.IsJoinedData && f.IsList) {
 			allRefered = false
@@ -63,36 +65,32 @@ func NewCompositeType(d *parser.Definition, module parser.Module, typesMap map[s
 		}
 	}
 	for _, mf := range typeDef.Meta.MutatableFields {
-		if _, ok := fields[mf]; !ok {
-			return nil, fmt.Errorf("could not find field definition for mutable field [%s], in type [%s]", mf, typeDef.Name)
-		}
 		fields[mf].IsMutatable = true
 	}
+	sortBy := utils.NewSet(typeDef.Meta.SortBy...)
+	sortBy.Add("time_created")
 
-	for _, field := range typeDef.Meta.SearchFields {
-		if _, ok := fields[field]; !ok {
-			return nil, fmt.Errorf("could not find field definition for search-field [%s], in type [%s]", field, typeDef.Name)
-		}
+	filters := utils.NewSet(typeDef.Meta.Filters...)
+	if typeDef.Meta.ViewerRefenceField != "" {
+		filters.Add(typeDef.Meta.ViewerRefenceField)
 	}
-	for _, field := range typeDef.Meta.Filters {
-		if _, ok := fields[field]; !ok {
-			return nil, fmt.Errorf("could not find field definition for filter-field [%s], in type [%s]", field, typeDef.Name)
-		}
-	}
+
 	return &CompositeType{
-		Name:             typeDef.Name,
-		Fields:           fields,
-		IsNode:           isNode,
-		GraphqlOps:       typeDef.Meta.GraphqlOps,
-		SearchFields:     typeDef.Meta.SearchFields,
-		Filters:          typeDef.Meta.Filters,
-		MutatableFields:  typeDef.Meta.MutatableFields,
-		Module:           &module,
-		AllReferedFields: allRefered,
-		NoGraphql:        typeDef.NoGraphql,
-		ReferedTypes:     map[string]*CompositeType{},
-		ParentTypes:      map[string]*CompositeType{},
-		IsViewerType:     typeDef.Name == d.Defaults.ViewerType,
+		Name:               typeDef.Name,
+		Fields:             fields,
+		IsNode:             isNode,
+		GraphqlOps:         typeDef.Meta.GraphqlOps,
+		SearchFields:       typeDef.Meta.SearchFields,
+		Filters:            filters.Elems(),
+		MutatableFields:    typeDef.Meta.MutatableFields,
+		SortBy:             sortBy.Elems(),
+		Module:             &module,
+		AllReferedFields:   allRefered,
+		NoGraphql:          typeDef.NoGraphql,
+		ReferedTypes:       map[string]*CompositeType{},
+		ParentTypes:        map[string]*CompositeType{},
+		IsViewerType:       typeDef.Name == d.Defaults.ViewerType,
+		ViewerRefenceField: typeDef.Meta.ViewerRefenceField,
 	}, nil
 }
 

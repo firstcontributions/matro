@@ -6,6 +6,12 @@ schema {
 	mutation: Mutation
 }
 scalar Time
+
+enum SortOrder {
+	asc,
+	desc,
+}
+
 type Query {
 	viewer: User
   
@@ -45,6 +51,7 @@ type PageInfo {
 	{{- if .IsEdge}}
 	{{- template "connectionDef" .}}
 	{{- template "edgeDef" .}}
+	{{- template "sortby" .}}
 	{{- end}}
 	{{- end}}
 {{- end}}
@@ -54,6 +61,7 @@ type PageInfo {
 	{{- if .IsEdge}}
 	{{- template "connectionDef" .}}
 	{{- template "edgeDef" .}}
+	{{- template "sortby" .}}
 	{{- end}}
 {{- end}}
 
@@ -130,12 +138,25 @@ type {{.EdgeName}} {
 }
 {{- end}}
 
+{{- define "sortby" }} 
+
+enum {{ title .Name -}}SortBy {
+	{{- range .SortBy }}
+	{{ . }},
+	{{- end}}
+}
+{{- end}}
+
 
 {{- define "connectionDef" }} 
 
 type {{.ConnectionName}} {
 	edges: [{{ .EdgeName}}]!
 	pageInfo: PageInfo!
+	totalCount: Int!
+	{{- if (ne .ViewerRefenceField "") }}
+	hasViewerAssociation: Boolean!
+	{{- end}}
 }
 {{- end}}
 

@@ -143,4 +143,24 @@ func ({{.Name}} *{{title .Name -}}Update) FromProto(proto{{- title .Name }} *pro
 }
 {{- end}}
 {{- end}}
+
+
+
+type {{ title .Name -}}Filters struct {
+	Ids []string
+	{{ if not (empty .SearchFields) -}}
+		Search *string
+	{{ end }}
+	{{- $t := . -}}
+	{{- range .Filters -}}
+		{{ title . }} *{{$t.FieldType . }}
+	{{- end -}}
+	{{- range .ReferedTypes -}}
+		{{- if (eq $t.Module.Name .Module.Name)}}
+		{{ title .Name}} *{{- title .Name}}
+		{{- else}}
+		{{ title .Name}} *{{.Module.Store}}.{{- title .Name}}
+		{{- end}}
+	{{- end -}}
+}
 `

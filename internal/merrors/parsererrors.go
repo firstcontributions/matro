@@ -23,4 +23,7 @@ var (
 
 	// ErrUndefinedMutableField raised when the given mutable field is not defined as a property for the type
 	ErrUndefinedMutableField = errors.New("undefined mutable field")
+
+	// ErrUndefinedSortField raised when the given sort by field is not defined as a property for the type
+	ErrUndefinedSortField = errors.New("undefined sort by field")
 )

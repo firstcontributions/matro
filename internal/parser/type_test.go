@@ -479,6 +479,20 @@ func TestType_Validate(t *testing.T) {
 			wantErr: merrors.ErrUndefinedMutableField,
 		},
 		{
+			name: "should report undefined sort by fields",
+			t: &Type{_Type: _Type{
+				Name: "user",
+				Type: "list",
+				Meta: Meta{
+					SortBy: []string{"name"},
+				},
+				Properties: map[string]*Type{
+					"id": {_Type: _Type{Type: "id"}},
+				},
+			}},
+			wantErr: merrors.ErrUndefinedSortField,
+		},
+		{
 			name: "should not raise any errors if all the given fields are defined",
 			t: &Type{
 				_Type: _Type{
