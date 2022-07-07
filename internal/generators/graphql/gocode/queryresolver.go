@@ -56,11 +56,20 @@ func (r *Resolver) {{title .Query.Name}}(ctx context.Context, in *{{title .Query
 }
 {{- else}} 
 {{- if .Query.Parent }}
-func (n *{{- title .Query.Parent.Name -}}) {{title .Query.Name}}(ctx context.Context{{- if (ne (len .Query.Args) 0)}}, in *{{title .Query.Name -}}Input {{- end}}) (*{{- title .ReturnType.Name}}, error) {
+func (n *{{- title .Query.Parent.Name -}}) {{title .Query.Name}}(ctx context.Context {{- if (ne (len .Query.Args) 0)}}, in *{{title .Query.Name -}}Input {{- end}}) (*{{- title .ReturnType.Name}}, error) {
 {{- else }}
-func (r *Resolver) {{title .Query.Name}}(ctx context.Context, {{- if (ne (len .Query.Args) 0)}}, in *{{title .Query.Name -}}Input {{- end}}) (*{{- title .ReturnType.Name }}, error) {
+func (r *Resolver) {{title .Query.Name}}(ctx context.Context {{- if (ne (len .Query.Args) 0)}}, in *{{title .Query.Name -}}Input {{- end}}) (*{{- title .ReturnType.Name }}, error) {
 {{- end}}
-	return New{{- title .ReturnType.Name }}(), nil
+	
+	filters := &{{.ReturnType.Module.Store -}}.{{- title .ReturnType.Name -}}Filters{
+		{{- template "getargs" . }}
+	}
+	store := storemanager.FromContext(ctx)
+	{{.ReturnType.Name }}, err := store.{{- title .ReturnType.Module.Name -}}Store.GetOne{{- title .ReturnType.Name}}(ctx, filters)
+	if err != nil {
+		return nil, err
+	}
+	return New{{- title .ReturnType.Name }}({{.ReturnType.Name }}), nil
 }
 {{- end}}
 

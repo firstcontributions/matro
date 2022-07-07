@@ -3,6 +3,8 @@ package mongo
 const utilsTmpl = `
 package utils
 
+import "go.mongodb.org/mongo-driver/bson"
+
 const (
 	defaultLimit int64 = 10
 	defaultOrder int   = 1
@@ -21,9 +23,9 @@ func GetLimitAndSortOrderAndCursor(first, last *int64, after, before *string) (i
 	return *last, -1, before
 }
 
-func GetSortOrder(sortBy, requestedSortOrder  *string, order int) bson.D {
+func GetSortOrder(sortBy, requestedSortOrder *string, order int) bson.D {
 	order = order * defaultOrder * getSortOrderFromString(requestedSortOrder)
-	
+
 	field := "time_created"
 	if sortBy != nil {
 		field = *sortBy
@@ -43,9 +45,9 @@ func getSortOrderFromString(order *string) int {
 
 func ReverseList[T interface{}](list []*T) []*T {
 	ln := len(list)
-	for i := 0; i< ln/2; i++ {
-		list[i], list[ln-1-i] =  list[ln-1-i], list[i]
+	for i := 0; i < ln/2; i++ {
+		list[i], list[ln-1-i] = list[ln-1-i], list[i]
 	}
 	return list
-} 
+}
 `
