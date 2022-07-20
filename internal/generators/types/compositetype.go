@@ -68,7 +68,9 @@ func NewCompositeType(d *parser.Definition, module parser.Module, typesMap map[s
 		fields[mf].IsMutatable = true
 	}
 	sortBy := utils.NewSet(typeDef.Meta.SortBy...)
-	sortBy.Add("time_created")
+	if _, ok := fields["time_created"]; ok {
+		sortBy.Add("time_created")
+	}
 
 	filters := utils.NewSet(typeDef.Meta.Filters...)
 	if typeDef.Meta.ViewerRefenceField != "" {
@@ -137,6 +139,7 @@ func (c *CompositeType) ConnectionName() string {
 // FieldType return the type of the given field
 func (c *CompositeType) FieldType(field string) string {
 	f := c.Fields[field]
+
 	if f.IsJoinedData {
 		return parser.String
 	}

@@ -2,6 +2,16 @@ package mongo
 
 const modelTyp = `
 package {{ .Module.Name -}}store
+type {{title .Name -}}SortBy uint8
+
+const (
+	{{title .Name }}SortByDefault {{title .Name -}}SortBy = iota
+	{{- $t := . }}
+	{{- range .SortBy }}
+	{{title $t.Name -}}SortBy{{- title .}}
+	{{- end}}
+	
+)
 
 type {{title .Name}} struct {
 	{{- range .ReferedTypes}}
@@ -16,13 +26,32 @@ type {{title .Name}} struct {
 	{{- end}}
 	{{- end}}
 	{{- end}}
-	{{- if (eq .Module.DB "")}}
-	Cursor string
-	{{- end}}
 }
 
 func New{{- title .Name }}() *{{- title .Name }} {
 	return &{{ title .Name }}{}
+}
+func ({{.Name}} *{{title .Name}}) Get(field string) interface{} {
+	switch field {
+	{{- $t := .}}
+	{{- range .ReferedTypes}}
+	case "{{- .Name -}}_id":
+		return {{$t.Name -}}.{{- title .Name}}ID
+	{{- end}}
+	{{- range .Fields}}
+	{{- if  (not (and .IsJoinedData  .IsList))}}
+	{{- if eq .Name "id" }}
+	case "_id":
+		return {{$t.Name}}.Id
+	{{- else}}
+	case "{{.Name}}":
+		return {{$t.Name}}.{{- .GoName true}} 
+	{{- end}}
+	{{- end}}
+	{{- end}}
+	default:
+		return nil
+	}
 }
 
 {{- if  .HaveProto}}
@@ -162,5 +191,38 @@ type {{ title .Name -}}Filters struct {
 		{{ title .Name}} *{{.Module.Store}}.{{- title .Name}}
 		{{- end}}
 	{{- end -}}
+}
+
+func (s {{title .Name -}}SortBy) String() string {
+	switch s {
+		{{- range .SortBy }}
+	case {{title $t.Name -}}SortBy{{- title .}}:
+		return "{{.}}"
+		{{- end}}
+	default:
+		return "time_created"
+	}
+}
+
+func Get{{- title .Name -}}SortByFromString(s string) {{ title .Name -}}SortBy {
+	switch s {
+		{{- range .SortBy }}
+	case "{{.}}":
+		return {{title $t.Name -}}SortBy{{- title .}}
+		{{- end}}
+	default:
+		return {{title .Name }}SortByDefault
+	}
+}
+
+func (s {{ title .Name -}}SortBy) CursorType() cursor.ValueType {
+	switch s {
+		{{- range .SortBy }}
+	case {{title $t.Name -}}SortBy{{- title .}}:
+		return cursor.ValueType{{- title ($t.FieldType .)}}
+		{{- end}}
+	default:
+		return cursor.ValueTypeTime
+	}
 }
 `

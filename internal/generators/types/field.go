@@ -14,6 +14,7 @@ import (
 type Field struct {
 	Name             string
 	Type             string
+	GraphQLType      string
 	IsList           bool
 	IsNullable       bool
 	IsPaginated      bool
@@ -29,13 +30,16 @@ type Field struct {
 
 // paginationArgs are the defualt pagination arguments should be
 //  there with graphql relay paginated queries
-var paginationArgs = []Field{
-	{Name: "first", Type: parser.Int},
-	{Name: "last", Type: parser.Int},
-	{Name: "after", Type: parser.String},
-	{Name: "before", Type: parser.String},
-	{Name: "sort_by", Type: parser.String},
-	{Name: "sort_order", Type: parser.String},
+
+func getPaginationArgs(f *Field) []Field {
+	return []Field{
+		{Name: "first", Type: parser.Int},
+		{Name: "last", Type: parser.Int},
+		{Name: "after", Type: parser.String},
+		{Name: "before", Type: parser.String},
+		{Name: "sort_order", Type: parser.String, GraphQLType: "sort_order"},
+		{Name: "sort_by", Type: parser.String, GraphQLType: f.Type + "_sort_by"},
+	}
 }
 
 // TODO(@gokultp) clean up this function, make it more readable
@@ -74,7 +78,7 @@ func NewField(d *parser.Definition, typesMap map[string]*parser.Type, typeDef *p
 	}
 
 	if f.IsPaginated {
-		f.Args = append(f.Args, paginationArgs...)
+		f.Args = append(f.Args, getPaginationArgs(f)...)
 		f.IsQuery = true
 	}
 	return f

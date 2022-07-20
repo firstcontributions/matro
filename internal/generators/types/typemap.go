@@ -55,8 +55,8 @@ var grpcTypeMap = map[string]string{
 // GetGraphQLType returns graphql schema type from matro type
 func GetGraphQLType(t *Field) string {
 	ts := ""
-	if t.Name == "sort_order" {
-		return "SortOrder"
+	if t.GraphQLType != "" {
+		return utils.ToTitleCase(t.GraphQLType)
 	}
 	if s, ok := graphQLSchemaTypeMap[t.Type]; ok {
 		ts = s

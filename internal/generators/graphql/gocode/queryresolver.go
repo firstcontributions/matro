@@ -39,20 +39,24 @@ func (r *Resolver) {{title .Query.Name}}(ctx context.Context, in *{{title .Query
 	filters := &{{.ReturnType.Module.Store -}}.{{- title .ReturnType.Name -}}Filters{
 		{{- template "getargs" . }}
 	}
-	data, hasNextPage, hasPreviousPage, firstCursor, lastCursor, err :=  store.{{- title .ReturnType.Module.Name -}}Store.Get{{- plural (title .ReturnType.Name)}} (
+	sortByStr := ""
+	if in.SortBy != nil {
+		sortByStr = *in.SortBy 
+	}
+	data, hasNextPage, hasPreviousPage, cursors, err :=  store.{{- title .ReturnType.Module.Name -}}Store.Get{{- plural (title .ReturnType.Name)}} (
 		ctx,
 		filters,
 		in.After,
 		in.Before,
 		first,
 		last, 
-		in.SortBy,
+		{{.ReturnType.Module.Store}}.Get{{title .ReturnType.Name}}SortByFromString(sortByStr),
 		in.SortOrder,
 	)
 	if err != nil {
 		return nil, err
 	}
-	return New{{- .ReturnType.ConnectionName}}(filters, data, hasNextPage, hasPreviousPage, &firstCursor, &lastCursor), nil
+	return New{{- .ReturnType.ConnectionName}}(filters, data, hasNextPage, hasPreviousPage, cursors), nil
 }
 {{- else}} 
 {{- if .Query.Parent }}
