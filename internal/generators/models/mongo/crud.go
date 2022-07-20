@@ -93,14 +93,13 @@ func (s *{{- title .Module.Name -}}Store) Get{{- title (plural .Name) -}} (
 	before *string,
 	first  *int64, 
 	last  *int64,
-	sortBy *string, 
+	sortBy {{ .Module.Store -}}.{{title .Name -}}SortBy, 
 	sortOrder *string,
 ) (
 	[]*{{ .Module.Store -}}. {{- title .Name}}, 
 	bool,
 	bool,
-	string,
-	string,
+	[]string,
 	error,
 ) {
 	qb := {{ .Name -}}FiltersToQuery(filters)	
@@ -111,19 +110,20 @@ func (s *{{- title .Module.Name -}}Store) Get{{- title (plural .Name) -}} (
 		if c != nil {
 			if order == 1 {
 				qb.Or(
-					qb.And(
-						qb.Eq(c.SortBy, c.OffsetValue), 
-						qb.Gt("_id", c.ID),
-					),  
-					qb.Gt(c.SortBy, c.OffsetValue),
+					
+					mongoqb.NewQueryBuilder().
+						Eq({{ .Module.Store -}}.{{title .Name -}}SortBy(c.SortBy).String(), c.OffsetValue).
+						Gt("_id", c.ID),
+					mongoqb.NewQueryBuilder().
+						Gt({{ .Module.Store -}}.{{title .Name -}}SortBy(c.SortBy).String(), c.OffsetValue),
 				)
 			} else {
 				qb.Or(
-					qb.And(
-						qb.Eq(c.SortBy, c.OffsetValue), 
-						qb.Lt("_id", c.ID),
-					),  
-					qb.Lt(c.SortBy, c.OffsetValue),
+					mongoqb.NewQueryBuilder().
+						Eq({{ .Module.Store -}}.{{title .Name -}}SortBy(c.SortBy).String(), c.OffsetValue).
+						Lt("_id", c.ID), 
+					mongoqb.NewQueryBuilder().
+						Lt({{ .Module.Store -}}.{{title .Name -}}SortBy(c.SortBy).String(), c.OffsetValue),
 				)
 			}
 		}
@@ -132,24 +132,23 @@ func (s *{{- title .Module.Name -}}Store) Get{{- title (plural .Name) -}} (
 	limit += 2
 	options := &options.FindOptions{
 		Limit: &limit,
-		Sort:  utils.GetSortOrder(sortBy, sortOrder, order),
+		Sort:  utils.GetSortOrder(sortBy.String(), sortOrder, order),
 	}
 
-	var firstCursor, lastCursor string
 	var hasNextPage, hasPreviousPage bool
 
 	var {{plural .Name}} []*{{ .Module.Store -}}. {{- title .Name}}
 	mongoCursor, err := s.getCollection(Collection{{title (plural .Name)}}).Find(ctx, qb.Build(), options)
 	if  err != nil {
-		return nil, hasNextPage, hasPreviousPage, firstCursor, lastCursor, err
+		return nil, hasNextPage, hasPreviousPage, nil, err
 	}
 	err = mongoCursor.All(ctx, &{{- plural .Name}})
 	if err != nil {
-		return nil, hasNextPage, hasPreviousPage, firstCursor, lastCursor, err
+		return nil, hasNextPage, hasPreviousPage, nil, err
 	}
 	count := len({{ plural .Name}})
 	if count == 0 {
-		return {{ plural .Name}}, hasNextPage, hasPreviousPage, firstCursor, lastCursor, nil
+		return {{ plural .Name}}, hasNextPage, hasPreviousPage, nil, nil
 	}
 
 	// check if the cursor element present, if yes that can be a prev elem
@@ -166,16 +165,16 @@ func (s *{{- title .Module.Name -}}Store) Get{{- title (plural .Name) -}} (
 		count = len({{ plural .Name }})
 	}
 
-	if  count > 0 {
-		firstCursor = cursor.NewCursor({{ plural .Name -}}[0].Id, "time_created", {{ plural .Name -}}[0].TimeCreated).String()
-		lastCursor = cursor.NewCursor({{ plural .Name -}}[count-1].Id,  "time_created",  {{ plural .Name -}}[count-1].TimeCreated).String()
+	cursors := make([]string, count)
+	for i, {{.Name}} := range {{ plural .Name }} {
+		cursors[i] = cursor.NewCursor({{.Name}}.Id, uint8(sortBy), {{.Name}}.Get(sortBy.String()), sortBy.CursorType()).String()
 	}
+
 	if order < 0 {
 		hasNextPage, hasPreviousPage = hasPreviousPage, hasNextPage
-		firstCursor, lastCursor = lastCursor, firstCursor
 		{{ plural .Name}} = utils.ReverseList({{ plural .Name}})
 	}
-	return {{ plural .Name}}, hasNextPage, hasPreviousPage, firstCursor, lastCursor, nil
+	return {{ plural .Name}}, hasNextPage, hasPreviousPage, cursors, nil
 }
 
 func (s *{{- title .Module.Name -}}Store) Update{{- title .Name -}} (ctx context.Context, id string, {{.Name -}}Update *{{-  .Module.Store -}}. {{- title .Name -}}Update) (error) {

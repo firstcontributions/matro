@@ -10,6 +10,17 @@ import (
 	"github.com/graph-gophers/graphql-go"
 )
 
+type NodeType uint8
+
+const (
+	NodeTypeUnknown NodeType = iota
+	{{- range .Types}}
+	{{- if .IsNode }}
+	NodeType{{- title .Name}}
+	{{- end}}
+	{{- end}}
+)
+
 type Node interface {
 	ID(context.Context) graphql.ID
 }
@@ -31,7 +42,7 @@ func (r *Resolver) Node(ctx context.Context, in NodeIDInput) (*NodeResolver, err
 	switch id.Type {
 		{{- range .Types}}
 		{{- if .IsNode }}
-	case "{{- .Name -}}":
+	case NodeType{{- title .Name}}:
 		{{.Name}}Data, err := store.{{- title .Module.Name -}}Store.Get{{- title .Name -}}ByID(ctx, id.ID)
 		if err != nil {
 			return nil, err

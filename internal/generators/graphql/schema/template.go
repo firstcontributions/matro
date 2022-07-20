@@ -8,8 +8,8 @@ schema {
 scalar Time
 
 enum SortOrder {
-	asc,
 	desc,
+	asc,
 }
 
 type Query {

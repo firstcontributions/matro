@@ -172,7 +172,11 @@ func New {{- title .Name}} (m *{{.Module.Name -}}store.{{-  title .Name}}) *{{- 
 
 {{- define "nodeIDResolver" }}
 func (n *{{ title .Name}}) ID(ctx context.Context) graphql.ID {
-	return NewIDMarshaller("{{.Name}}", n.Id).
+	{{- if (eq .Module.DataSource "external_apis")}}
+	return NewIDMarshaller(NodeType{{- title .Name}}, n.Id, false).
+	{{- else}}
+	return NewIDMarshaller(NodeType{{- title .Name}}, n.Id, true).
+	{{- end}}
 	ToGraphqlID()
 }
 {{- end}}
@@ -207,21 +211,21 @@ func New{{.ConnectionName}}(
 	data []*{{- .Module.Store -}}.{{- title .Name}},
 	hasNextPage bool,
 	hasPreviousPage bool,
-	firstCursor *string, 
-	lastCursor *string,
+	cursors []string, 
 ) *{{.ConnectionName}}{
 	edges := []* {{- .EdgeName}}{}
-	for _, d := range data {
+	for i, d := range data {
 		node := New {{- title .Name}}(d)
 
 		edges = append(edges, &{{- .EdgeName}}{
 			Node : node,
-			{{- if (eq .Module.DB "")}}
-			Cursor: d.Cursor,
-			{{- else}}
-			Cursor: cursor.NewCursor(d.Id, "time_created", d.TimeCreated).String(),
-			{{- end}}
+			Cursor: cursors[i],
 		})
+	}
+	var startCursor, endCursor *string
+	if len(cursors) > 0 {
+		startCursor = &cursors[0]
+		endCursor = &cursors[len(cursors)-1]
 	}
 	return &{{.ConnectionName}} {
 		filters: filters,
@@ -229,8 +233,8 @@ func New{{.ConnectionName}}(
 		PageInfo: &PageInfo{
 			HasNextPage : hasNextPage,
 			HasPreviousPage : hasPreviousPage,
-			StartCursor :firstCursor,
-			EndCursor :lastCursor,
+			StartCursor :startCursor,
+			EndCursor :endCursor,
 		},
 	}
 }
