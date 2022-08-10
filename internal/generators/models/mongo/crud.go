@@ -102,13 +102,23 @@ func (s *{{- title .Module.Name -}}Store) Get{{- title (plural .Name) -}} (
 	[]string,
 	error,
 ) {
-	qb := {{ .Name -}}FiltersToQuery(filters)	
-	limit, order, cursorStr := utils.GetLimitAndSortOrderAndCursor(first, last, after, before)
+	qb := {{ .Name -}}FiltersToQuery(filters)
+	reqSortOrder := utils.GetSortOrderFromString(sortOrder)	
+	limit, paginationSortOrder, cursorStr, err := utils.GetLimitAndSortOrderAndCursor(first, last, after, before)
+	if err != nil {
+		return nil, false, false, nil, err 
+	}
+
+	effectiveSortOrder := reqSortOrder * paginationSortOrder
+
 	var c *cursor.Cursor
 	if cursorStr != nil {
-		c = cursor.FromString(*cursorStr)
+		c, err = cursor.FromString(*cursorStr)
+		if err != nil {
+			return nil, false, false, nil, err
+		}
 		if c != nil {
-			if order == 1 {
+			if effectiveSortOrder == 1 {
 				qb.Or(
 					
 					mongoqb.NewQueryBuilder().
@@ -132,7 +142,7 @@ func (s *{{- title .Module.Name -}}Store) Get{{- title (plural .Name) -}} (
 	limit += 2
 	options := &options.FindOptions{
 		Limit: &limit,
-		Sort:  utils.GetSortOrder(sortBy.String(), sortOrder, order),
+		Sort:  utils.GetSortOrder(sortBy.String(), effectiveSortOrder),
 	}
 
 	var hasNextPage, hasPreviousPage bool
@@ -170,7 +180,7 @@ func (s *{{- title .Module.Name -}}Store) Get{{- title (plural .Name) -}} (
 		cursors[i] = cursor.NewCursor({{.Name}}.Id, uint8(sortBy), {{.Name}}.Get(sortBy.String()), sortBy.CursorType()).String()
 	}
 
-	if order < 0 {
+	if paginationSortOrder < 0 {
 		hasNextPage, hasPreviousPage = hasPreviousPage, hasNextPage
 		{{ plural .Name}} = utils.ReverseList({{ plural .Name}})
 	}
