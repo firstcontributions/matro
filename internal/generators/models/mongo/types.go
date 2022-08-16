@@ -26,6 +26,10 @@ type {{title .Name}} struct {
 	{{- end}}
 	{{- end}}
 	{{- end}}
+	{{- if .IsViewerType }}
+	Permissions []authorizer.Permission ` + "`bson:\"permissions,omitempty\"`" + ` 
+	{{- end}}
+	Ownership *authorizer.Scope ` + "`bson:\"ownership,omitempty\"`" + ` 
 }
 
 func New{{- title .Name }}() *{{- title .Name }} {

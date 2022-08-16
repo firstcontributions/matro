@@ -39,7 +39,7 @@ func (r *Resolver) Node(ctx context.Context, in NodeIDInput) (*NodeResolver, err
 	if err != nil {
 		return nil, err
 	}
-	switch id.Type {
+	switch id.NodeType() {
 		{{- range .Types}}
 		{{- if .IsNode }}
 	case NodeType{{- title .Name}}:
