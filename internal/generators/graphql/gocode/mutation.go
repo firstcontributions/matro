@@ -32,8 +32,11 @@ func (m *Resolver) Create{{- title .Name }}(
 	{{- end}}
 	{{- end}}
 
+	ownership := &authorizer.Scope{
+		Users: []string{session.UserID()},
+	}
 	{{.Name}}, err := storemanager.FromContext(ctx).
-		{{- title .Module.Name -}}Store.Create{{- title .Name }}(ctx, {{.Name}}ModelInput)
+		{{- title .Module.Name -}}Store.Create{{- title .Name }}(ctx, {{.Name}}ModelInput, ownership)
 	if err != nil {
 		return nil, err
 	}
@@ -47,17 +50,31 @@ func (m *Resolver) Update{{- title .Name }}(
 		{{title .Name}}  *Update{{- title .Name -}}Input
 	},
 ) (*{{- title .Name }}, error) {
+	session := session.FromContext(ctx)
+	if session == nil {
+		return nil, errors.New("unauthorized")
+	}
+
 	store := storemanager.FromContext(ctx)
 
 	id, err := ParseGraphqlID(args.{{title .Name -}}.ID)
 	if err != nil {
 		return nil, err
 	}
+
+	{{.Name}}, err := store.{{- title .Module.Name -}}Store.Get{{- title .Name }}ByID(ctx, id.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	if !authorizer.IsAuthorized(session.Permissions, {{.Name -}}.Ownership, authorizer.{{title .Name}}, authorizer.OperationUpdate) {
+		return nil, errors.New("forbidden")
+	}
 	{{- $type := .}}
 	if err := store.{{- title .Module.Name -}}Store.Update{{- title .Name }}(ctx, id.ID, args.{{title .Name -}}.ToModel());err != nil {
 		return nil, err
 	}
-	{{.Name}}, err := store.{{- title .Module.Name -}}Store.Get{{- title .Name }}ByID(ctx, id.ID)
+	{{.Name}}, err = store.{{- title .Module.Name -}}Store.Get{{- title .Name }}ByID(ctx, id.ID)
 	if err != nil {
 		return nil, err
 	}

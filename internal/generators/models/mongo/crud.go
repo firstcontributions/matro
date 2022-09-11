@@ -33,7 +33,7 @@ func {{ .Name -}}FiltersToQuery(filters *{{ .Module.Store -}}. {{- title .Name -
 	{{- end}}
 	return qb
 }
-func (s *{{- title .Module.Name -}}Store) Create{{- title .Name -}} (ctx context.Context, {{.Name}} *{{-  .Module.Store -}}. {{- title .Name}}) (* {{ .Module.Store -}}. {{- title .Name}}, error) {
+func (s *{{- title .Module.Name -}}Store) Create{{- title .Name -}} (ctx context.Context, {{.Name}} *{{-  .Module.Store -}}. {{- title .Name}}, ownership *authorizer.Scope) (* {{ .Module.Store -}}. {{- title .Name}}, error) {
 	now := time.Now()
 	{{.Name -}}.TimeCreated = now
 	{{.Name -}}.TimeUpdated = now
@@ -42,6 +42,17 @@ func (s *{{- title .Module.Name -}}Store) Create{{- title .Name -}} (ctx context
 		return nil, err
 	}
 	{{.Name -}}.Id = uuid.String()
+	{{- if .IsViewerType}}
+	{{.Name -}}.Permissions = []authorizer.Permission{
+		{
+			Role: "admin",
+			Scope: authorizer.Scope{Users: []string{ {{.Name -}}.Id}},
+		},
+	}	
+	{{.Name -}}.Ownership = &authorizer.Scope{Users: []string{ {{.Name -}}.Id}}
+	{{- else}}
+	{{.Name -}}.Ownership = ownership
+	{{- end}}
 	if _, err := s.getCollection(Collection{{title (plural .Name)}}).InsertOne(ctx, {{.Name}}); err != nil {
 		return nil, err
 	}

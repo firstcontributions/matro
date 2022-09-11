@@ -14,7 +14,7 @@ type Store interface {
 	Get{{- title (plural .Name) -}} (ctx context.Context, filters *{{- title .Name -}}Filters, after *string, before *string, first *int64, last *int64, sortBy {{title .Name -}}SortBy, sortOrder *string) ([]* {{- title .Name}}, bool, bool, []string, error) 
 	Count{{- title (plural .Name) -}} (ctx context.Context, filters *{{- title .Name -}}Filters) (int64, error) 
 	{{- if (ne .Module.DB "") }}
-	Create{{- title .Name -}} (ctx context.Context, {{ .Name}}  *{{- title .Name}}) (*{{- title .Name}}, error)
+	Create{{- title .Name -}} (ctx context.Context, {{ .Name}}  *{{- title .Name}},  ownership *authorizer.Scope) (*{{- title .Name}}, error)
 	Update{{- title .Name -}} (ctx context.Context, id string, update *{{- title .Name -}}Update) (error) 
 	Delete{{- title .Name -}}ByID (ctx context.Context, id string) (error)
 	{{- end}}
