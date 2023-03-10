@@ -18,6 +18,7 @@ type Field struct {
 	IsList           bool
 	IsNullable       bool
 	IsPaginated      bool
+	MaxCount         int
 	IsQuery          bool
 	Args             []Field
 	IsPrimitive      bool
@@ -62,6 +63,7 @@ func NewField(d *parser.Definition, typesMap map[string]*parser.Type, typeDef *p
 		IsJoinedData:     typeDef.JoinedData,
 		HardcodedFilters: typeDef.HardcodedFilters,
 		ViewerRefence:    isViewerReferece,
+		MaxCount:         typeDef.MaxCount,
 	}
 	if typeDef.Schema == "" {
 		f.Type = typeDef.Name

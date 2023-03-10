@@ -24,6 +24,7 @@ func (m *Resolver) Create{{- title .Name }}(
 	{{- if .ViewerRefence}} 
 	{{$type.Name -}}ModelInput.{{- title .Name}} = session.UserID()
 	{{- end}}
+	// code for maxcount check {{.Name}}
 	{{- end}}
 
 	{{- range .ReferedTypes}}
@@ -31,6 +32,8 @@ func (m *Resolver) Create{{- title .Name }}(
 	{{$type.Name -}}ModelInput.{{- title .Name}}ID = session.UserID()
 	{{- end}}
 	{{- end}}
+
+
 
 	ownership := &authorizer.Scope{
 		Users: []string{session.UserID()},

@@ -95,6 +95,7 @@ type _Type struct {
 	Name             string            `json:"name"`
 	Type             string            `json:"type"`
 	Paginated        bool              `json:"paginated"`
+	MaxCount         int               `json:"max_count"`
 	Schema           string            `json:"schema"`
 	JoinedData       bool              `json:"joined_data"`
 	Properties       map[string]*Type  `json:"properties"`
