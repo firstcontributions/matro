@@ -60,7 +60,7 @@
 ---
 - [x] GraphQL Schema generator
 - [x] gRPC proto buf & service stub generator
-- [ ] gRPC service implementation
-- [ ] Models/ Store generator
-- [ ] Graphql golang implementation
+- [x] gRPC service implementation
+- [x] Models/ Store generator
+- [x] Graphql golang implementation
 - [ ] React-relay generator 
