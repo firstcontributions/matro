@@ -24,7 +24,6 @@ func (m *Resolver) Create{{- title .Name }}(
 	{{- if .ViewerRefence}} 
 	{{$type.Name -}}ModelInput.{{- title .Name}} = session.UserID()
 	{{- end}}
-	// code for maxcount check {{.Name}}
 	{{- end}}
 
 	{{- range .ReferedTypes}}
