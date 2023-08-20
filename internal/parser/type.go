@@ -95,6 +95,7 @@ type _Type struct {
 	Name             string            `json:"name"`
 	Type             string            `json:"type"`
 	Paginated        bool              `json:"paginated"`
+	MaxCount         int               `json:"max_count"`
 	Schema           string            `json:"schema"`
 	JoinedData       bool              `json:"joined_data"`
 	Properties       map[string]*Type  `json:"properties"`
@@ -151,6 +152,12 @@ func (t *Type) IsPrimitive() bool {
 	switch t.Type {
 	case Int, Bool, Float, ID, String, Time:
 		return true
+	}
+	if t.Type == List {
+		switch t.Schema {
+		case Int, Bool, Float, ID, String, Time:
+			return true
+		}
 	}
 	return false
 }

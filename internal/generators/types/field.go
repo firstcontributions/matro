@@ -18,6 +18,7 @@ type Field struct {
 	IsList           bool
 	IsNullable       bool
 	IsPaginated      bool
+	MaxCount         int
 	IsQuery          bool
 	Args             []Field
 	IsPrimitive      bool
@@ -47,6 +48,15 @@ func getPaginationArgs(f *Field) []Field {
 func NewField(d *parser.Definition, typesMap map[string]*parser.Type, typeDef *parser.Type, name string, isViewerReferece bool) *Field {
 
 	if typeDef.IsPrimitive() {
+		if typeDef.Type == parser.List {
+			return &Field{
+				Name:        name,
+				Type:        typeDef.Schema,
+				IsPrimitive: true,
+				NoGraphql:   typeDef.NoGraphql,
+				IsList:      true,
+			}
+		}
 		return &Field{
 			Name:        name,
 			Type:        typeDef.Type,
@@ -62,6 +72,7 @@ func NewField(d *parser.Definition, typesMap map[string]*parser.Type, typeDef *p
 		IsJoinedData:     typeDef.JoinedData,
 		HardcodedFilters: typeDef.HardcodedFilters,
 		ViewerRefence:    isViewerReferece,
+		MaxCount:         typeDef.MaxCount,
 	}
 	if typeDef.Schema == "" {
 		f.Type = typeDef.Name
