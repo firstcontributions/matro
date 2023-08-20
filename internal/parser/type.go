@@ -153,6 +153,12 @@ func (t *Type) IsPrimitive() bool {
 	case Int, Bool, Float, ID, String, Time:
 		return true
 	}
+	if t.Type == List {
+		switch t.Schema {
+		case Int, Bool, Float, ID, String, Time:
+			return true
+		}
+	}
 	return false
 }
 

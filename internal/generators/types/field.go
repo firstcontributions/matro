@@ -48,6 +48,15 @@ func getPaginationArgs(f *Field) []Field {
 func NewField(d *parser.Definition, typesMap map[string]*parser.Type, typeDef *parser.Type, name string, isViewerReferece bool) *Field {
 
 	if typeDef.IsPrimitive() {
+		if typeDef.Type == parser.List {
+			return &Field{
+				Name:        name,
+				Type:        typeDef.Schema,
+				IsPrimitive: true,
+				NoGraphql:   typeDef.NoGraphql,
+				IsList:      true,
+			}
+		}
 		return &Field{
 			Name:        name,
 			Type:        typeDef.Type,

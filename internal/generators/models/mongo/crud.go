@@ -41,6 +41,11 @@ func (s *{{- title .Module.Name -}}Store) Create{{- title .Name -}} (ctx context
 	if err != nil {
 		return nil, err
 	}
+	if dproc, ok := interface{}({{.Name -}}).(utils.DataProcessor); ok {
+		if err := dproc.Process(ctx); err != nil {
+			return nil, err
+		}
+	}
 	{{.Name -}}.Id = uuid.String()
 	{{- if .IsViewerType}}
 	{{.Name -}}.Permissions = []authorizer.Permission{
@@ -199,6 +204,12 @@ func (s *{{- title .Module.Name -}}Store) Get{{- title (plural .Name) -}} (
 }
 
 func (s *{{- title .Module.Name -}}Store) Update{{- title .Name -}} (ctx context.Context, id string, {{.Name -}}Update *{{-  .Module.Store -}}. {{- title .Name -}}Update) (error) {
+	
+	if dproc, ok := interface{}({{.Name -}}Update).(utils.DataProcessor); ok {
+		if err := dproc.Process(ctx); err != nil {
+			return err
+		}
+	}
 	qb := mongoqb.NewQueryBuilder().
 			Eq("_id", id)
 

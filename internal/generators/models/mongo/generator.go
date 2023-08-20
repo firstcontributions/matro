@@ -52,6 +52,9 @@ func (g *Generator) Generate(ctx context.Context) error {
 	if err := g.generateUtilsPkg(ctx); err != nil {
 		return err
 	}
+	if err := g.generateDataProcessorInterface(ctx); err != nil {
+		return err
+	}
 	for _, m := range g.Modules {
 		if err := g.generateStore(ctx, m); err != nil {
 			return err
@@ -111,6 +114,16 @@ func (g *Generator) generateUtilsPkg(ctx context.Context) error {
 		fmt.Sprintf("%s/internal/models/utils", g.Path),
 		"pagination.go",
 		utilsTmpl,
+		g,
+	)
+}
+
+func (g *Generator) generateDataProcessorInterface(ctx context.Context) error {
+	return writer.CompileAndWrite(
+		ctx,
+		fmt.Sprintf("%s/internal/models/utils", g.Path),
+		"dataprocessor.go",
+		dprocTmpl,
 		g,
 	)
 }
